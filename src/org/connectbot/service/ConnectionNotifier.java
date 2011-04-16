@@ -42,10 +42,7 @@ public abstract class ConnectionNotifier {
 	private static final int ACTIVITY_NOTIFICATION = 2;
 
 	public static ConnectionNotifier getInstance() {
-		if (PreferenceConstants.PRE_ECLAIR)
-			return PreEclair.Holder.sInstance;
-		else
-			return EclairAndBeyond.Holder.sInstance;
+		return EclairAndBeyond.Holder.sInstance;
 	}
 
 	protected NotificationManager getNotificationManager(Context context) {
@@ -126,24 +123,6 @@ public abstract class ConnectionNotifier {
 
 	public abstract void showRunningNotification(Service context);
 	public abstract void hideRunningNotification(Service context);
-
-	private static class PreEclair extends ConnectionNotifier {
-		private static class Holder {
-			private static final PreEclair sInstance = new PreEclair();
-		}
-
-		@Override
-		public void showRunningNotification(Service context) {
-			context.setForeground(true);
-			getNotificationManager(context).notify(ONLINE_NOTIFICATION, newRunningNotification(context));
-		}
-
-		@Override
-		public void hideRunningNotification(Service context) {
-			context.setForeground(false);
-			getNotificationManager(context).cancel(ONLINE_NOTIFICATION);
-		}
-	}
 
 	private static class EclairAndBeyond extends ConnectionNotifier {
 		private static class Holder {

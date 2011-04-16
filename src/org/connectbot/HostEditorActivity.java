@@ -18,11 +18,7 @@
 package org.connectbot;
 
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.connectbot.bean.HostBean;
@@ -157,7 +153,11 @@ public class HostEditorActivity extends PreferenceActivity implements OnSharedPr
 				return this;
 			}
 
-			public android.content.SharedPreferences.Editor remove(String key) {
+            public SharedPreferences.Editor putStringSet(String s, Set<String> strings) {
+                return this;
+            }
+
+            public android.content.SharedPreferences.Editor remove(String key) {
 				//Log.d(this.getClass().toString(), String.format("Editor.remove(key=%s)", key));
 				update.remove(key);
 				return this;
@@ -197,7 +197,11 @@ public class HostEditorActivity extends PreferenceActivity implements OnSharedPr
 			return values.get(key);
 		}
 
-		protected List<OnSharedPreferenceChangeListener> listeners = new LinkedList<OnSharedPreferenceChangeListener>();
+        public Set<String> getStringSet(String s, Set<String> strings) {
+            return null;
+        }
+
+        protected List<OnSharedPreferenceChangeListener> listeners = new LinkedList<OnSharedPreferenceChangeListener>();
 
 		public void registerOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
 			listeners.add(listener);
