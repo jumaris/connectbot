@@ -203,9 +203,11 @@ public class PubkeyListActivity extends ListActivity implements EventListener {
 		MenuItem generatekey = menu.add(R.string.pubkey_generate);
 		generatekey.setIcon(android.R.drawable.ic_menu_manage);
 		generatekey.setIntent(new Intent(PubkeyListActivity.this, GeneratePubkeyActivity.class));
+        generatekey.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 
 		MenuItem importkey = menu.add(R.string.pubkey_import);
 		importkey.setIcon(android.R.drawable.ic_menu_upload);
+        importkey.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 		importkey.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			public boolean onMenuItemClick(MenuItem item) {
 				Uri sdcard = Uri.fromFile(Environment.getExternalStorageDirectory());

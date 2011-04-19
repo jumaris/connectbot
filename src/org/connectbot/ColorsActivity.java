@@ -305,6 +305,7 @@ public class ColorsActivity extends Activity implements OnItemClickListener, OnC
 		reset.setAlphabeticShortcut('r');
 		reset.setNumericShortcut('1');
 		reset.setIcon(android.R.drawable.ic_menu_revert);
+        reset.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 		reset.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			public boolean onMenuItemClick(MenuItem arg0) {
 				// Reset each individual color to defaults.
