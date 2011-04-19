@@ -426,6 +426,9 @@ public class HostListFragment extends Fragment {
             if (mCurCheckPosition > -1) lv.setItemChecked(mCurCheckPosition, true);
             //Log.d("ConnectBotTablet", "Item at "+mCurCheckPosition+"; Item checked at "+lv.getCheckedItemPosition());
         }
+
+        if (hosts.size() > 0) this.getView().findViewById(android.R.id.empty).setVisibility(View.GONE);
+        else this.getView().findViewById(android.R.id.empty).setVisibility(View.VISIBLE);
 	}
 
     public void setCurrentSelected(int position) {
