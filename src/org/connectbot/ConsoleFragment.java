@@ -228,6 +228,7 @@ public class ConsoleFragment extends Fragment {
 				//getActivity().finish();
                 mListener.onTerminalViewChanged(null);
                 getActivity().invalidateOptionsMenu();
+                hideAllPrompts();
 			}
 		}
 	}
