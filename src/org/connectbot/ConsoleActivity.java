@@ -109,8 +109,8 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 	/**
 	 *
 	 */
-	/*private void configureOrientation() {
-		String rotateDefault;
+	private void configureOrientation() {
+		/*String rotateDefault;
 		if (getResources().getConfiguration().keyboard == Configuration.KEYBOARD_NOKEYS)
 			rotateDefault = PreferenceConstants.ROTATION_PORTRAIT;
 		else
@@ -130,8 +130,17 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 		} else {
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 			forcedOrientation = false;
-		}
-	}*/
+		}*/
+
+        // Hide Host List fragment in portrait mode
+        int orientation = ((WindowManager) getSystemService(WINDOW_SERVICE)).getDefaultDisplay().getOrientation();
+        Log.d("ConnectBotTablet", "Orientation: "+orientation);
+        if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180 ) {
+            findViewById(R.id.listFrame).setVisibility(View.VISIBLE);
+        } else {
+            findViewById(R.id.listFrame).setVisibility(View.GONE);
+        }
+	}
 
 	@Override
 	public void onStart() {
@@ -153,7 +162,7 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 		super.onResume();
 		Log.d(TAG, "onResume called");
 
-		//configureOrientation();
+		configureOrientation();
 	}
 
 	/* (non-Javadoc)
@@ -207,14 +216,7 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 			mKeyboardButton.setVisibility(bound.hardKeyboardHidden ? View.VISIBLE : View.GONE);
 		}*/
 
-        // Hide Host List fragment in portrait mode
-        int orientation = ((WindowManager) getSystemService(WINDOW_SERVICE)).getDefaultDisplay().getOrientation();
-        Log.d("ConnectBotTablet", "Orientation: "+orientation);
-        if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180 ) {
-            findViewById(R.id.listFrame).setVisibility(View.VISIBLE);
-        } else {
-            findViewById(R.id.listFrame).setVisibility(View.GONE);
-        }
+        configureOrientation();
 	}
 
     public TerminalManager getTerminalManager() {
