@@ -20,6 +20,8 @@ package org.connectbot;
 import java.util.List;
 
 import android.app.FragmentTransaction;
+import android.text.AndroidCharacter;
+import android.util.DisplayMetrics;
 import org.connectbot.bean.HostBean;
 import org.connectbot.service.TerminalBridge;
 import org.connectbot.service.TerminalManager;
@@ -111,6 +113,16 @@ public class HostListActivity extends Activity implements HostListFragment.HostL
 	@Override
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
+
+        // If we are on tablet, skip this activity and move straight to console activity
+        // TODO: Need a new workaround when new OS are released
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
+            Intent i = new Intent(this, ConsoleActivity.class);
+            startActivity(i);
+            finish();
+            return;
+        }
+
 		setContentView(R.layout.act_hostlist);
 
 		this.setTitle(String.format("%s: %s",

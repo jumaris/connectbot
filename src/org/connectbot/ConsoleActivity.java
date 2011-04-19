@@ -21,6 +21,10 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 import android.app.FragmentTransaction;
+import android.view.Surface;
+import android.view.View;
+import android.view.WindowManager;
+import org.connectbot.bean.HostBean;
 import org.connectbot.bean.SelectionArea;
 import org.connectbot.service.PromptHelper;
 import org.connectbot.service.TerminalBridge;
@@ -43,7 +47,7 @@ import android.util.Log;
 
 import com.nullwire.trace.ExceptionHandler;
 
-public class ConsoleActivity extends Activity implements ConsoleFragment.ConsoleFragmentContainer {
+public class ConsoleActivity extends Activity implements ConsoleFragment.ConsoleFragmentContainer, HostListFragment.HostListFragmentContainer {
 	public final static String TAG = "ConnectBot.ConsoleActivity";
 
 	protected TerminalManager bound = null;
@@ -51,6 +55,7 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 	protected Uri requested;
 
     ConsoleFragment fragmentConsole;
+    HostListFragment fragmentHostList;
 
 	private ServiceConnection connection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
@@ -64,6 +69,9 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 			bound.setResizeAllowed(true);
 
 			fragmentConsole.setupConsoles();
+
+            // update our listview binder to find the service
+			if (fragmentHostList != null) fragmentHostList.updateList();
 		}
 
 		public void onServiceDisconnected(ComponentName className) {
@@ -75,6 +83,7 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 
 			fragmentConsole.destroyConsoles();
 			bound = null;
+			if (fragmentHostList != null) fragmentHostList.updateList();
 		}
 	};
 
@@ -104,7 +113,10 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 
         FragmentTransaction ft = getFragmentManager().beginTransaction();
         ft.replace(R.id.consoleFrame, fragmentConsole);
-        //ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+        if (findViewById(R.id.listFrame) != null) {
+            fragmentHostList = HostListFragment.newInstance();
+            ft.replace(R.id.listFrame, fragmentHostList);
+        }
         ft.commit();
 	}
 
@@ -179,7 +191,7 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 			return;
 		}
 
-		fragmentConsole.onNewIntent(requested);
+		fragmentConsole.startConsole(requested);
 	}
 
 	@Override
@@ -208,9 +220,31 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 
 			mKeyboardButton.setVisibility(bound.hardKeyboardHidden ? View.VISIBLE : View.GONE);
 		}*/
+
+        // Hide Host List fragment in portrait mode
+        int orientation = ((WindowManager) getSystemService(WINDOW_SERVICE)).getDefaultDisplay().getOrientation();
+        Log.d("ConnectBotTablet", "Orientation: "+orientation);
+        if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180 ) {
+            findViewById(R.id.listFrame).setVisibility(View.VISIBLE);
+        } else {
+            findViewById(R.id.listFrame).setVisibility(View.GONE);
+        }
 	}
 
     public TerminalManager getTerminalManager() {
         return bound;
+    }
+
+    public void onTerminalViewChanged(HostBean host) {
+        fragmentHostList.updateList();
+        fragmentHostList.setCurrentSelected(host);
+    }
+
+    public boolean startConsoleActivity(Uri uri) {
+        fragmentConsole.startConsole(uri);
+        fragmentHostList.updateList();
+        invalidateOptionsMenu();
+
+        return true;
     }
 }

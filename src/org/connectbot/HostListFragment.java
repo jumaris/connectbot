@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.graphics.LightingColorFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -46,8 +47,8 @@ public class HostListFragment extends Fragment {
     private Spinner transportSpinner;
 	private TextView quickconnect;
 
-    private int mCurCheckPosition = 0;
-    private int mShownCheckPosition = -1;
+    private int mCurCheckPosition = -1;
+    private int mShownCheckPosition = -2;
 
 	protected LayoutInflater inflater = null;
     private HostListFragmentContainer mListener;
@@ -158,8 +159,8 @@ public class HostListFragment extends Fragment {
                         if (mDualPane) {
                             // We can display everything in-place with fragments, so update
                             // the list to highlight the selected item and show the data.
-                            lv.setItemChecked(position, true);
-                            Log.d("ConnectBotTablet", "Item checked at "+lv.getCheckedItemPosition());
+                            //lv.setItemChecked(position, true);
+                            //Log.d("ConnectBotTablet", "Item at "+position+"; Item checked at "+lv.getCheckedItemPosition());
                             if (mShownCheckPosition != mCurCheckPosition) mShownCheckPosition = position;
                         }
 
@@ -168,7 +169,10 @@ public class HostListFragment extends Fragment {
 				}
 			}
 		});
-
+        if (mDualPane) {
+            // In dual-pane mode, the list view highlights the selected item.
+            lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        }
 		this.registerForContextMenu(lv);
 
         quickconnect = (TextView) v.findViewById(R.id.front_quickconnect);
@@ -431,9 +435,33 @@ public class HostListFragment extends Fragment {
 		}
 
 		HostAdapter adapter = new HostAdapter(getActivity(), hosts, bound);
-
 		this.lv.setAdapter(adapter);
+
+        if (mDualPane) {
+            // Make sure our UI is in the correct state.
+            if (mCurCheckPosition > -1) lv.setItemChecked(mCurCheckPosition, true);
+            //Log.d("ConnectBotTablet", "Item at "+mCurCheckPosition+"; Item checked at "+lv.getCheckedItemPosition());
+        }
 	}
+
+    public void setCurrentSelected(int position) {
+        mCurCheckPosition = position;
+        lv.setItemChecked(mCurCheckPosition, true);
+    }
+
+    public void setCurrentSelected(HostBean host) {
+        if (hosts == null) return;
+
+        //Log.d("ConnectBotTablet", "Selecting item based on " + host.getUri());
+
+        for (int i = 0; i < hosts.size(); i++) {
+            if (hosts.get(i).getUri().equals(host.getUri())) {
+                setCurrentSelected(i);
+                //Log.d("ConnectBotTablet", "\tSelecting " + i);
+                return;
+            }
+        }
+    }
 
     class HostAdapter extends ArrayAdapter<HostBean> {
 		private List<HostBean> hosts;

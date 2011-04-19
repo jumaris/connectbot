@@ -46,6 +46,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import com.nullwire.trace.ExceptionHandler;
 import com.sun.tools.corba.se.idl.constExpr.Terminal;
 import de.mud.terminal.vt320;
+import org.connectbot.bean.HostBean;
 import org.connectbot.bean.SelectionArea;
 import org.connectbot.service.PromptHelper;
 import org.connectbot.service.TerminalBridge;
@@ -109,6 +110,7 @@ public class ConsoleFragment extends Fragment {
 
     public interface ConsoleFragmentContainer {
         public TerminalManager getTerminalManager();
+        public void onTerminalViewChanged(HostBean host);
     }
 
     /**
@@ -215,6 +217,7 @@ public class ConsoleFragment extends Fragment {
 	}
 
 	protected View findCurrentView(int id) {
+        if (flip == null) return null;
 		View view = flip.getCurrentView();
 		if(view == null) return null;
 		return view.findViewById(id);
@@ -586,18 +589,22 @@ public class ConsoleFragment extends Fragment {
 	public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
 		super.onCreateOptionsMenu(menu, menuInflater);
 
-		View view = findCurrentView(R.id.console_flip);
-		final boolean activeTerminal = (view instanceof TerminalView);
-		boolean sessionOpen = false;
-		boolean disconnected = false;
-		boolean canForwardPorts = false;
+        boolean sessionOpen = false;
+        boolean disconnected = false;
+        boolean canForwardPorts = false;
+        boolean activeTerminal = false;
 
-		if (activeTerminal) {
-			TerminalBridge bridge = ((TerminalView) view).bridge;
-			sessionOpen = bridge.isSessionOpen();
-			disconnected = bridge.isDisconnected();
-			canForwardPorts = bridge.canFowardPorts();
-		}
+        if (findCurrentView(R.id.console_flip) != null) {
+            View view = findCurrentView(R.id.console_flip);
+            activeTerminal = (view instanceof TerminalView);
+
+            if (activeTerminal) {
+                TerminalBridge bridge = ((TerminalView) view).bridge;
+                sessionOpen = bridge.isSessionOpen();
+                disconnected = bridge.isDisconnected();
+                canForwardPorts = bridge.canFowardPorts();
+            }
+        }
 
 		menu.setQwertyMode(true);
 
@@ -607,6 +614,7 @@ public class ConsoleFragment extends Fragment {
 			disconnect.setTitle(R.string.console_menu_close);
 		disconnect.setEnabled(activeTerminal);
 		disconnect.setIcon(android.R.drawable.ic_menu_close_clear_cancel);
+        disconnect.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 		disconnect.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			public boolean onMenuItemClick(MenuItem item) {
 				// disconnect or close the currently visible session
@@ -622,6 +630,7 @@ public class ConsoleFragment extends Fragment {
 		copy.setAlphabeticShortcut('c');
 		copy.setIcon(android.R.drawable.ic_menu_set_as);
 		copy.setEnabled(activeTerminal);
+        copy.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 		copy.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			public boolean onMenuItemClick(MenuItem item) {
 				// mark as copying and reset any previous bounds
@@ -646,6 +655,7 @@ public class ConsoleFragment extends Fragment {
 		paste.setAlphabeticShortcut('v');
 		paste.setIcon(android.R.drawable.ic_menu_edit);
 		paste.setEnabled(clipboard.hasText() && sessionOpen);
+        paste.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 		paste.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			public boolean onMenuItemClick(MenuItem item) {
 				// force insert of clipboard text into current console
@@ -815,7 +825,7 @@ public class ConsoleFragment extends Fragment {
 			bound.setResizeAllowed(true);
 	}
 
-	protected void onNewIntent(Uri requested) {
+	protected void startConsole(Uri requested) {
 		/*super.onNewIntent(intent);
 
 		Log.d(TAG, "onNewIntent called");
@@ -899,6 +909,9 @@ public class ConsoleFragment extends Fragment {
 			}
 
 			updatePromptVisible();
+
+            TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
+            mListener.onTerminalViewChanged(terminalView.bridge.host);
 		}
 	}
 
@@ -1078,6 +1091,8 @@ public class ConsoleFragment extends Fragment {
 				flip.setDisplayedChild(requestedIndex);
 				flip.getCurrentView().findViewById(R.id.terminal_overlay)
 						.startAnimation(fade_out_delayed);
+                TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
+                mListener.onTerminalViewChanged(terminalView.bridge.host);
 			} catch (NullPointerException npe) {
 				Log.d(TAG, "View went away when we were about to display it", npe);
 			}
