@@ -62,7 +62,7 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 			bound = ((TerminalManager.TerminalBinder) service).getService();
 
 			// let manager know about our event handling services
-			bound.disconnectHandler = disconnectHandler;
+			bound.disconnectHandler = fragmentConsole.disconnectHandler;
 
 			Log.d(TAG, String.format("Connected to TerminalManager and found bridges.size=%d", bound.bridges.size()));
 
@@ -84,20 +84,6 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 			fragmentConsole.destroyConsoles();
 			bound = null;
 			if (fragmentHostList != null) fragmentHostList.updateList();
-		}
-	};
-
-    protected Handler disconnectHandler = new Handler() {
-		@Override
-		public void handleMessage(Message msg) {
-			Log.d(TAG, "Someone sending HANDLE_DISCONNECT to parentHandler");
-
-			// someone below us requested to display a password dialog
-			// they are sending nickname and requested
-			TerminalBridge bridge = (TerminalBridge)msg.obj;
-
-			if (bridge.isAwaitingClose())
-				fragmentConsole.closeBridge(bridge);
 		}
 	};
 

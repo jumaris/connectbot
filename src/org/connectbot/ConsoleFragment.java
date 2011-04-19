@@ -145,6 +145,20 @@ public class ConsoleFragment extends Fragment {
 		}
 	};
 
+    public Handler disconnectHandler = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			Log.d(TAG, "Someone sending HANDLE_DISCONNECT to parentHandler");
+
+			// someone below us requested to display a password dialog
+			// they are sending nickname and requested
+			TerminalBridge bridge = (TerminalBridge)msg.obj;
+
+			if (bridge.isAwaitingClose())
+				closeBridge(bridge);
+		}
+	};
+
     public void setupConsoles() {
         TerminalManager bound = mListener.getTerminalManager();
 

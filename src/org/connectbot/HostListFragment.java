@@ -48,7 +48,6 @@ public class HostListFragment extends Fragment {
 	private TextView quickconnect;
 
     private int mCurCheckPosition = -1;
-    private int mShownCheckPosition = -2;
 
 	protected LayoutInflater inflater = null;
     private HostListFragmentContainer mListener;
@@ -152,20 +151,7 @@ public class HostListFragment extends Fragment {
 
 				} else {
                     mCurCheckPosition = position;
-
-                    if (mDualPane && mShownCheckPosition == mCurCheckPosition) {
-                        return;
-                    } else {
-                        if (mDualPane) {
-                            // We can display everything in-place with fragments, so update
-                            // the list to highlight the selected item and show the data.
-                            //lv.setItemChecked(position, true);
-                            //Log.d("ConnectBotTablet", "Item at "+position+"; Item checked at "+lv.getCheckedItemPosition());
-                            if (mShownCheckPosition != mCurCheckPosition) mShownCheckPosition = position;
-                        }
-
-                        startConsoleActivity(uri);
-                    }
+                    startConsoleActivity(uri);
 				}
 			}
 		});
@@ -216,7 +202,6 @@ public class HostListFragment extends Fragment {
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt("curChoice", mCurCheckPosition);
-        outState.putInt("shownChoice", mShownCheckPosition);
     }
 
     @Override
@@ -226,7 +211,6 @@ public class HostListFragment extends Fragment {
         if (savedInstanceState != null) {
             // Restore last state for checked position.
             mCurCheckPosition = savedInstanceState.getInt("curChoice", 0);
-            mShownCheckPosition = savedInstanceState.getInt("shownChoice", -1);
         }
 
         //this.inflater = LayoutInflater.from(getActivity());
