@@ -449,8 +449,13 @@ public class HostListFragment extends Fragment {
         lv.setItemChecked(mCurCheckPosition, true);
     }
 
+    public void setNoneSelected() {
+        lv.setItemChecked(mCurCheckPosition, false);
+        mCurCheckPosition = -1;
+    }
+
     public void setCurrentSelected(HostBean host) {
-        if (hosts != null) {
+        if (host != null) {
             //Log.d("ConnectBotTablet", "Selecting item based on " + host.getUri());
 
             for (int i = 0; i < hosts.size(); i++) {
@@ -461,7 +466,7 @@ public class HostListFragment extends Fragment {
                 }
             }
         } else {
-            setCurrentSelected(-1);
+            setNoneSelected();
         }
     }
 

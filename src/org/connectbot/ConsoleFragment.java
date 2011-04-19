@@ -194,9 +194,7 @@ public class ConsoleFragment extends Fragment {
 			if (flipIndex >= 0) {
 				if (flip.getDisplayedChild() == flipIndex) {
 					shiftCurrentTerminal(SHIFT_LEFT);
-				} else {
-                    mListener.onTerminalViewChanged(null);
-                }
+				}
 				flip.removeViewAt(flipIndex);
 
 				/* TODO Remove this workaround when ViewFlipper is fixed to listen
@@ -214,6 +212,7 @@ public class ConsoleFragment extends Fragment {
 			// If we just closed the last bridge, go back to the previous activity.
 			if (flip.getChildCount() == 0) {
 				//getActivity().finish();
+                mListener.onTerminalViewChanged(null);
                 getActivity().invalidateOptionsMenu();
 			}
 		}
