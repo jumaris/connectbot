@@ -450,16 +450,18 @@ public class HostListFragment extends Fragment {
     }
 
     public void setCurrentSelected(HostBean host) {
-        if (hosts == null) return;
+        if (hosts != null) {
+            //Log.d("ConnectBotTablet", "Selecting item based on " + host.getUri());
 
-        //Log.d("ConnectBotTablet", "Selecting item based on " + host.getUri());
-
-        for (int i = 0; i < hosts.size(); i++) {
-            if (hosts.get(i).getUri().equals(host.getUri())) {
-                setCurrentSelected(i);
-                //Log.d("ConnectBotTablet", "\tSelecting " + i);
-                return;
+            for (int i = 0; i < hosts.size(); i++) {
+                if (hosts.get(i).getUri().equals(host.getUri())) {
+                    setCurrentSelected(i);
+                    //Log.d("ConnectBotTablet", "\tSelecting " + i);
+                    return;
+                }
             }
+        } else {
+            setCurrentSelected(-1);
         }
     }
 

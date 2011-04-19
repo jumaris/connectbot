@@ -238,12 +238,11 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
     public void onTerminalViewChanged(HostBean host) {
         fragmentHostList.updateList();
         fragmentHostList.setCurrentSelected(host);
+        invalidateOptionsMenu();
     }
 
     public boolean startConsoleActivity(Uri uri) {
         fragmentConsole.startConsole(uri);
-        fragmentHostList.updateList();
-        invalidateOptionsMenu();
 
         return true;
     }
