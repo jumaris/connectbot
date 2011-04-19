@@ -164,7 +164,7 @@ public class HostListFragment extends Fragment {
                             if (mShownCheckPosition != mCurCheckPosition) mShownCheckPosition = position;
                         }
 
-                        startConsoleActivity();
+                        startConsoleActivity(uri);
                     }
 				}
 			}
@@ -391,6 +391,10 @@ public class HostListFragment extends Fragment {
 		});
 	}
 
+    public boolean startConsoleActivity(Uri uri) {
+        return mListener.startConsoleActivity(uri);
+    }
+
     public boolean startConsoleActivity() {
         Uri uri = TransportFactory.getUri((String) transportSpinner
                 .getSelectedItem(), quickconnect.getText().toString());
@@ -403,7 +407,7 @@ public class HostListFragment extends Fragment {
 			return false;
 		}
 
-        return mListener.startConsoleActivity(uri);
+        return startConsoleActivity(uri);
     }
 
 	protected void updateList() {
