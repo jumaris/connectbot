@@ -143,19 +143,8 @@ public class HostListActivity extends Activity implements HostListFragment.HostL
 	}
 
     public boolean startConsoleActivity(Uri uri) {
-        if(this.hostdb == null)
-			this.hostdb = new HostDatabase(this);
-
-		HostBean host = TransportFactory.findHost(hostdb, uri);
-		if (host == null) {
-			host = TransportFactory.getTransport(uri.getScheme()).createHost(uri);
-			host.setColor(HostDatabase.COLOR_GRAY);
-			host.setPubkeyId(HostDatabase.PUBKEYID_ANY);
-			hostdb.saveHost(host);
-		}
-
         Intent intent = new Intent(this, ConsoleActivity.class);
-        intent.setData(host.getUri());
+        intent.setData(uri);
         startActivity(intent);
 
 		return true;

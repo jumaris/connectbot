@@ -394,6 +394,17 @@ public class HostListFragment extends Fragment {
 			return false;
 		}
 
+        if(this.hostdb == null)
+			this.hostdb = new HostDatabase(getActivity());
+
+		HostBean host = TransportFactory.findHost(hostdb, uri);
+		if (host == null) {
+			host = TransportFactory.getTransport(uri.getScheme()).createHost(uri);
+			host.setColor(HostDatabase.COLOR_GRAY);
+			host.setPubkeyId(HostDatabase.PUBKEYID_ANY);
+			hostdb.saveHost(host);
+		}
+
         return startConsoleActivity(uri);
     }
 
