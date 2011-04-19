@@ -112,10 +112,9 @@ public class HostListFragment extends Fragment {
 
         this.sortedByColor = prefs.getBoolean(PreferenceConstants.SORT_BY_COLOR, false);
 
-        /*View v = getFragmentManager().findFragmentById(R.id.consoleFrame);
-        if (v == null) mDualPane = false;
-        else mDualPane = true;*/
-        mDualPane = false;
+        Fragment f = getFragmentManager().findFragmentById(R.id.consoleFrame);
+        if (f == null) mDualPane = false;
+        else mDualPane = true;
 
         setHasOptionsMenu(true);
     }
