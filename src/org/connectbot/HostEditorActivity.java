@@ -158,7 +158,7 @@ public class HostEditorActivity extends PreferenceActivity implements OnSharedPr
 				return this;
 			}
 
-			public android.content.SharedPreferences.Editor remove(String key) {
+            public android.content.SharedPreferences.Editor remove(String key) {
 				//Log.d(this.getClass().toString(), String.format("Editor.remove(key=%s)", key));
 				update.remove(key);
 				return this;

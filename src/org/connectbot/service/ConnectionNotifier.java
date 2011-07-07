@@ -45,10 +45,7 @@ public abstract class ConnectionNotifier {
 	private static final int ACTIVITY_NOTIFICATION = 2;
 
 	public static ConnectionNotifier getInstance() {
-		if (PreferenceConstants.PRE_ECLAIR)
-			return PreEclair.Holder.sInstance;
-		else
-			return EclairAndBeyond.Holder.sInstance;
+		return EclairAndBeyond.Holder.sInstance;
 	}
 
 	protected NotificationManager getNotificationManager(Context context) {
