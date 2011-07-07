@@ -148,14 +148,17 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 			forcedOrientation = false;
 		}*/
 
-        // Hide Host List fragment in portrait mode
-        int orientation = ((WindowManager) getSystemService(WINDOW_SERVICE)).getDefaultDisplay().getOrientation();
-        Log.d("ConnectBotTablet", "Orientation: "+orientation);
-        if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180 ) {
-            findViewById(R.id.listFrame).setVisibility(View.VISIBLE);
-        } else {
-            findViewById(R.id.listFrame).setVisibility(View.GONE);
-        }
+		// Hide Host List fragment in portrait mode
+		int orientation = ((WindowManager) getSystemService(WINDOW_SERVICE)).getDefaultDisplay().getOrientation();
+		Log.d("ConnectBotTablet", "Orientation: "+orientation);
+		final View listFrame = findViewById(R.id.listFrame);
+		if (listFrame != null) {
+			if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180 ) {
+				findViewById(R.id.listFrame).setVisibility(View.VISIBLE);
+			} else {
+				findViewById(R.id.listFrame).setVisibility(View.GONE);
+			}
+		}
 	}
 
 	@Override
