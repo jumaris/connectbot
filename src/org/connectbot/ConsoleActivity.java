@@ -91,19 +91,9 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 		}
 	};
 
-	// more like configureLaxMode -- enable network IO on UI thread
-	private void configureStrictMode() {
-		try {
-			Class.forName("android.os.StrictMode");
-			StrictModeSetup.run();
-		} catch (ClassNotFoundException e) {
-		}
-	}
-
 	@Override
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
-		configureStrictMode();
 		hardKeyboard = getResources().getConfiguration().keyboard ==
 				Configuration.KEYBOARD_QWERTY;
 
