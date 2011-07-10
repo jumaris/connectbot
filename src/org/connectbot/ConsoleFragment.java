@@ -125,36 +125,39 @@ public class ConsoleFragment extends Fragment {
 
 	private ImageView mKeyboardButton;
 
-    private ConsoleFragmentContainer mListener;
+	private ConsoleFragmentContainer mListener;
 
-    public interface ConsoleFragmentContainer {
-        public TerminalManager getTerminalManager();
-        public void onTerminalViewChanged(HostBean host);
-    }
+	public interface ConsoleFragmentContainer {
+		public TerminalManager getTerminalManager();
 
-    /**
-     * Create a new instance of HostListFragment
-     */
-    static ConsoleFragment newInstance() {
-        ConsoleFragment f = new ConsoleFragment();
+		public void onTerminalViewChanged(HostBean host);
+	}
 
-        // Supply num input as an argument.
-        /*Bundle args = new Bundle();
-        args.putInt("num", num);
-        f.setArguments(args);*/
+	/**
+	 * Create a new instance of HostListFragment
+	 */
+	static ConsoleFragment newInstance() {
+		ConsoleFragment f = new ConsoleFragment();
 
-        return f;
-    }
+		// Supply num input as an argument.
+		/*
+		 * Bundle args = new Bundle(); args.putInt("num", num);
+		 * f.setArguments(args);
+		 */
 
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        try {
-            mListener = (ConsoleFragmentContainer) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString() + " must implement ConsoleFragmentContainer");
-        }
-    }
+		return f;
+	}
+
+	@Override
+	public void onAttach(Activity activity) {
+		super.onAttach(activity);
+		try {
+			mListener = (ConsoleFragmentContainer) activity;
+		} catch (ClassCastException e) {
+			throw new ClassCastException(activity.toString()
+					+ " must implement ConsoleFragmentContainer");
+		}
+	}
 
 	protected Handler promptHandler = new Handler() {
 		@Override
@@ -164,7 +167,7 @@ public class ConsoleFragment extends Fragment {
 		}
 	};
 
-    public Handler disconnectHandler = new Handler() {
+	public Handler disconnectHandler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
 			Log.d(TAG, "Someone sending HANDLE_DISCONNECT to parentHandler");
@@ -178,44 +181,44 @@ public class ConsoleFragment extends Fragment {
 		}
 	};
 
-    public void setupConsoles() {
-        TerminalManager bound = mListener.getTerminalManager();
+	public void setupConsoles() {
+		TerminalManager bound = mListener.getTerminalManager();
 
-        // clear out any existing bridges and record requested index
-			flip.removeAllViews();
+		// clear out any existing bridges and record requested index
+		flip.removeAllViews();
 
-			final String requestedNickname = (requested != null) ? requested.getFragment() : null;
-			int requestedIndex = 0;
+		final String requestedNickname = (requested != null) ? requested.getFragment() : null;
+		int requestedIndex = 0;
 
-			TerminalBridge requestedBridge = bound.getConnectedBridge(requestedNickname);
+		TerminalBridge requestedBridge = bound.getConnectedBridge(requestedNickname);
 
-			// If we didn't find the requested connection, try opening it
-			if (requestedNickname != null && requestedBridge == null) {
-				try {
-					Log.d(TAG, String.format("We couldnt find an existing bridge with URI=%s (nickname=%s), so creating one now", requested.toString(), requestedNickname));
-					requestedBridge = bound.openConnection(requested);
-				} catch(Exception e) {
-					Log.e(TAG, "Problem while trying to create new requested bridge from URI", e);
-				}
+		// If we didn't find the requested connection, try opening it
+		if (requestedNickname != null && requestedBridge == null) {
+			try {
+				Log.d(TAG, String.format("We couldnt find an existing bridge with URI=%s (nickname=%s), so creating one now", requested.toString(), requestedNickname));
+				requestedBridge = bound.openConnection(requested);
+			} catch(Exception e) {
+				Log.e(TAG, "Problem while trying to create new requested bridge from URI", e);
 			}
+		}
 
-			// create views for all bridges on this service
-			for (TerminalBridge bridge : bound.bridges) {
+		// create views for all bridges on this service
+		for (TerminalBridge bridge : bound.bridges) {
 
-				final int currentIndex = addNewTerminalView(bridge);
+			final int currentIndex = addNewTerminalView(bridge);
 
-				// check to see if this bridge was requested
-				if (bridge == requestedBridge)
-					requestedIndex = currentIndex;
-			}
+			// check to see if this bridge was requested
+			if (bridge == requestedBridge)
+				requestedIndex = currentIndex;
+		}
 
-			setDisplayedTerminal(requestedIndex);
-    }
+		setDisplayedTerminal(requestedIndex);
+	}
 
-    public void destroyConsoles() {
-        flip.removeAllViews();
-	    updateEmptyVisible();
-    }
+	public void destroyConsoles() {
+		flip.removeAllViews();
+		updateEmptyVisible();
+	}
 
 	/**
 	 * @param bridge
@@ -245,15 +248,15 @@ public class ConsoleFragment extends Fragment {
 			// If we just closed the last bridge, go back to the previous activity.
 			if (flip.getChildCount() == 0) {
 				//getActivity().finish();
-                mListener.onTerminalViewChanged(null);
-                getActivity().invalidateOptionsMenu();
-                hideAllPrompts();
+				mListener.onTerminalViewChanged(null);
+				getActivity().invalidateOptionsMenu();
+				hideAllPrompts();
 			}
 		}
 	}
 
 	protected View findCurrentView(int id) {
-        if (flip == null) return null;
+		if (flip == null) return null;
 		View view = flip.getCurrentView();
 		if(view == null) return null;
 		return view.findViewById(id);
@@ -289,17 +292,16 @@ public class ConsoleFragment extends Fragment {
 		// handle requested console from incoming intent
 		requested = getActivity().getIntent().getData();
 
-        setHasOptionsMenu(true);
+		setHasOptionsMenu(true);
 	}
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.frg_console, container, false);
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		View v = inflater.inflate(R.layout.frg_console, container, false);
 
-        this.inflater = inflater;
+		this.inflater = inflater;
 
-        flip = (ViewFlipper) v.findViewById(R.id.console_flip);
+		flip = (ViewFlipper) v.findViewById(R.id.console_flip);
 		empty = (TextView) v.findViewById(android.R.id.empty);
 
 		stringPromptGroup = (RelativeLayout) v.findViewById(R.id.console_password_group);
@@ -405,7 +407,7 @@ public class ConsoleFragment extends Fragment {
 			}
 		});
 
-        // detect fling gestures to switch between terminals
+		// detect fling gestures to switch between terminals
 		final GestureDetector detect = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
 			private float totalY = 0;
 
@@ -589,13 +591,13 @@ public class ConsoleFragment extends Fragment {
 
 		});
 
-        return v;
-    }
+		return v;
+	}
 
 	/**
 	 *
 	 */
-    // TODO: Move to activity
+	// TODO: Move to activity
 	/*private void configureOrientation() {
 		String rotateDefault;
 		if (getResources().getConfiguration().keyboard == Configuration.KEYBOARD_NOKEYS)
@@ -691,7 +693,7 @@ public class ConsoleFragment extends Fragment {
 		paste.setAlphabeticShortcut('v');
 		paste.setIcon(android.R.drawable.ic_menu_edit);
 		paste.setEnabled(clipboard.hasText() && sessionOpen);
-        paste.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+		paste.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 		paste.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			public boolean onMenuItemClick(MenuItem item) {
 				// force insert of clipboard text into current console
@@ -835,7 +837,7 @@ public class ConsoleFragment extends Fragment {
 		super.onPause();
 		Log.d(TAG, "onPause called");
 
-        TerminalManager bound = mListener.getTerminalManager();
+		TerminalManager bound = mListener.getTerminalManager();
 		if (forcedOrientation && bound != null)
 			bound.setResizeAllowed(false);
 	}
@@ -853,11 +855,11 @@ public class ConsoleFragment extends Fragment {
 			getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		}
 
-        // TODO: Orientation
-		//configureOrientation();
+		// TODO: Orientation
+		// configureOrientation();
 
-        TerminalManager bound = mListener.getTerminalManager();
-        if (forcedOrientation && bound != null)
+		TerminalManager bound = mListener.getTerminalManager();
+		if (forcedOrientation && bound != null)
 			bound.setResizeAllowed(true);
 	}
 
@@ -946,8 +948,8 @@ public class ConsoleFragment extends Fragment {
 
 			updatePromptVisible();
 
-            TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
-            mListener.onTerminalViewChanged(terminalView.bridge.host);
+			TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
+			mListener.onTerminalViewChanged(terminalView.bridge.host);
 		}
 	}
 
@@ -962,7 +964,7 @@ public class ConsoleFragment extends Fragment {
 		if(!(view instanceof TerminalView)) return;
 
 		TerminalView terminal = (TerminalView)view;
-        TerminalManager bound = mListener.getTerminalManager();
+		TerminalManager bound = mListener.getTerminalManager();
 		if (bound == null) return;
 		bound.defaultBridge = terminal.bridge;
 	}
@@ -1042,7 +1044,7 @@ public class ConsoleFragment extends Fragment {
 
 	}
 
-    // TODO: Move to Main Activity
+	// TODO: Move to Main Activity
 	/*@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);

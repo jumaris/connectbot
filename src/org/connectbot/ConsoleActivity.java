@@ -17,22 +17,12 @@
 
 package org.connectbot;
 
-import java.lang.ref.WeakReference;
-import java.util.List;
-
-import android.app.FragmentTransaction;
-import android.view.Surface;
-import android.view.View;
-import android.view.WindowManager;
 import org.connectbot.bean.HostBean;
-import org.connectbot.bean.SelectionArea;
-import org.connectbot.service.PromptHelper;
 import org.connectbot.service.TerminalBridge;
-import org.connectbot.service.TerminalKeyListener;
 import org.connectbot.service.TerminalManager;
-import org.connectbot.util.PreferenceConstants;
 
 import android.app.Activity;
+import android.app.FragmentTransaction;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -40,10 +30,11 @@ import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.util.Log;
+import android.view.Surface;
+import android.view.View;
+import android.view.WindowManager;
 
 import com.nullwire.trace.ExceptionHandler;
 
@@ -58,8 +49,8 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 
 	protected Uri requested;
 
-    ConsoleFragment fragmentConsole;
-    HostListFragment fragmentHostList;
+	ConsoleFragment fragmentConsole;
+	HostListFragment fragmentHostList;
 
 	private ServiceConnection connection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
@@ -74,7 +65,7 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 
 			fragmentConsole.setupConsoles();
 
-            // update our listview binder to find the service
+			// update our listview binder to find the service
 			if (fragmentHostList != null) fragmentHostList.updateList();
 		}
 
@@ -101,15 +92,15 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 
 		ExceptionHandler.register(this);
 
-        fragmentConsole = ConsoleFragment.newInstance();
+		fragmentConsole = ConsoleFragment.newInstance();
 
-        FragmentTransaction ft = getFragmentManager().beginTransaction();
-        ft.replace(R.id.consoleFrame, fragmentConsole);
-        if (findViewById(R.id.listFrame) != null) {
-            fragmentHostList = HostListFragment.newInstance();
-            ft.replace(R.id.listFrame, fragmentHostList);
-        }
-        ft.commit();
+		FragmentTransaction ft = getFragmentManager().beginTransaction();
+		ft.replace(R.id.consoleFrame, fragmentConsole);
+		if (findViewById(R.id.listFrame) != null) {
+			fragmentHostList = HostListFragment.newInstance();
+			ft.replace(R.id.listFrame, fragmentHostList);
+		}
+		ft.commit();
 	}
 
 	/**
@@ -225,22 +216,22 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 			mKeyboardButton.setVisibility(bound.hardKeyboardHidden ? View.VISIBLE : View.GONE);
 		}*/
 
-        configureOrientation();
+		configureOrientation();
 	}
 
-    public TerminalManager getTerminalManager() {
-        return bound;
-    }
+	public TerminalManager getTerminalManager() {
+		return bound;
+	}
 
-    public void onTerminalViewChanged(HostBean host) {
-        fragmentHostList.updateList();
-        fragmentHostList.setCurrentSelected(host);
-        invalidateOptionsMenu();
-    }
+	public void onTerminalViewChanged(HostBean host) {
+		fragmentHostList.updateList();
+		fragmentHostList.setCurrentSelected(host);
+		invalidateOptionsMenu();
+	}
 
-    public boolean startConsoleActivity(Uri uri) {
-        fragmentConsole.startConsole(uri);
+	public boolean startConsoleActivity(Uri uri) {
+		fragmentConsole.startConsole(uri);
 
-        return true;
-    }
+		return true;
+	}
 }

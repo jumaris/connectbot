@@ -43,9 +43,9 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.DialogInterface.OnClickListener;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -58,17 +58,17 @@ import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.MenuItem.OnMenuItemClickListener;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.AdapterView.OnItemClickListener;
 
 import com.trilead.ssh2.crypto.Base64;
 import com.trilead.ssh2.crypto.PEMDecoder;
@@ -203,11 +203,13 @@ public class PubkeyListActivity extends ListActivity implements EventListener {
 		MenuItem generatekey = menu.add(R.string.pubkey_generate);
 		generatekey.setIcon(android.R.drawable.ic_menu_manage);
 		generatekey.setIntent(new Intent(PubkeyListActivity.this, GeneratePubkeyActivity.class));
-        generatekey.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+		generatekey.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM
+				| MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 
 		MenuItem importkey = menu.add(R.string.pubkey_import);
 		importkey.setIcon(android.R.drawable.ic_menu_upload);
-        importkey.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+		importkey.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM
+				| MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 		importkey.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			public boolean onMenuItemClick(MenuItem item) {
 				Uri sdcard = Uri.fromFile(Environment.getExternalStorageDirectory());
@@ -217,7 +219,8 @@ public class PubkeyListActivity extends ListActivity implements EventListener {
 				Intent intent = new Intent(FileManagerIntents.ACTION_PICK_FILE);
 				intent.setData(sdcard);
 				intent.putExtra(FileManagerIntents.EXTRA_TITLE, pickerTitle);
-				intent.putExtra(FileManagerIntents.EXTRA_BUTTON_TEXT, getString(android.R.string.ok));
+				intent.putExtra(FileManagerIntents.EXTRA_BUTTON_TEXT,
+						getString(android.R.string.ok));
 
 				try {
 					startActivityForResult(intent, REQUEST_CODE_PICK_FILE);

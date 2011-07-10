@@ -44,18 +44,18 @@ import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.MenuItem.OnMenuItemClickListener;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AdapterView.OnItemSelectedListener;
 
 /**
  * List all portForwards for a particular host and provide a way for users to add more portForwards,
@@ -82,7 +82,8 @@ public class PortForwardListActivity extends ListActivity {
 	public void onStart() {
 		super.onStart();
 
-		this.bindService(new Intent(this, TerminalManager.class), connection, Context.BIND_AUTO_CREATE);
+		this.bindService(new Intent(this, TerminalManager.class), connection,
+				Context.BIND_AUTO_CREATE);
 
 		if(this.hostdb == null)
 			this.hostdb = new HostDatabase(this);
@@ -172,7 +173,7 @@ public class PortForwardListActivity extends ListActivity {
 
 		MenuItem add = menu.add(R.string.portforward_menu_add);
 		add.setIcon(android.R.drawable.ic_menu_add);
-        add.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+		add.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 		add.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			public boolean onMenuItemClick(MenuItem item) {
 				// build dialog to prompt user about updating

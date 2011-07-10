@@ -23,8 +23,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.connectbot.bean.HostBean;
 import org.connectbot.service.TerminalBridge;
@@ -158,7 +158,7 @@ public class HostEditorActivity extends PreferenceActivity implements OnSharedPr
 				return this;
 			}
 
-            public android.content.SharedPreferences.Editor remove(String key) {
+			public android.content.SharedPreferences.Editor remove(String key) {
 				//Log.d(this.getClass().toString(), String.format("Editor.remove(key=%s)", key));
 				update.remove(key);
 				return this;
