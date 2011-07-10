@@ -17,34 +17,9 @@
 
 package org.connectbot;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.Fragment;
-import android.content.*;
-import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
-import android.media.AudioManager;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
-import android.preference.PreferenceManager;
-import android.text.ClipboardManager;
-import android.util.Log;
-import android.view.*;
-import android.view.MenuItem.OnMenuItemClickListener;
-import android.view.View.OnClickListener;
-import android.view.View.OnKeyListener;
-import android.view.View.OnTouchListener;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.*;
-import android.widget.AdapterView.OnItemClickListener;
-import com.nullwire.trace.ExceptionHandler;
-import de.mud.terminal.vt320;
+import java.lang.ref.WeakReference;
+import java.util.List;
+
 import org.connectbot.bean.HostBean;
 import org.connectbot.bean.SelectionArea;
 import org.connectbot.service.PromptHelper;
@@ -53,8 +28,53 @@ import org.connectbot.service.TerminalKeyListener;
 import org.connectbot.service.TerminalManager;
 import org.connectbot.util.PreferenceConstants;
 
-import java.lang.ref.WeakReference;
-import java.util.List;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.Fragment;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.media.AudioManager;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.preference.PreferenceManager;
+import android.text.ClipboardManager;
+import android.util.Log;
+import android.view.GestureDetector;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.MenuItem.OnMenuItemClickListener;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnKeyListener;
+import android.view.View.OnTouchListener;
+import android.view.ViewConfiguration;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ViewFlipper;
+import de.mud.terminal.vt320;
 
 public class ConsoleFragment extends Fragment {
 	public final static String TAG = "ConnectBot.ConsoleFragment";
@@ -605,22 +625,22 @@ public class ConsoleFragment extends Fragment {
 	public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
 		super.onCreateOptionsMenu(menu, menuInflater);
 
-        boolean sessionOpen = false;
-        boolean disconnected = false;
-        boolean canForwardPorts = false;
-        boolean activeTerminal = false;
+		boolean sessionOpen = false;
+		boolean disconnected = false;
+		boolean canForwardPorts = false;
+		boolean activeTerminal = false;
 
-        if (findCurrentView(R.id.console_flip) != null) {
-            View view = findCurrentView(R.id.console_flip);
-            activeTerminal = (view instanceof TerminalView);
+		if (findCurrentView(R.id.console_flip) != null) {
+			View view = findCurrentView(R.id.console_flip);
+			activeTerminal = (view instanceof TerminalView);
 
-            if (activeTerminal) {
-                TerminalBridge bridge = ((TerminalView) view).bridge;
-                sessionOpen = bridge.isSessionOpen();
-                disconnected = bridge.isDisconnected();
-                canForwardPorts = bridge.canFowardPorts();
-            }
-        }
+			if (activeTerminal) {
+				TerminalBridge bridge = ((TerminalView) view).bridge;
+				sessionOpen = bridge.isSessionOpen();
+				disconnected = bridge.isDisconnected();
+				canForwardPorts = bridge.canFowardPorts();
+			}
+		}
 
 		menu.setQwertyMode(true);
 
@@ -630,7 +650,7 @@ public class ConsoleFragment extends Fragment {
 			disconnect.setTitle(R.string.console_menu_close);
 		disconnect.setEnabled(activeTerminal);
 		disconnect.setIcon(android.R.drawable.ic_menu_close_clear_cancel);
-        disconnect.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+		disconnect.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 		disconnect.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			public boolean onMenuItemClick(MenuItem item) {
 				// disconnect or close the currently visible session
@@ -646,7 +666,7 @@ public class ConsoleFragment extends Fragment {
 		copy.setAlphabeticShortcut('c');
 		copy.setIcon(android.R.drawable.ic_menu_set_as);
 		copy.setEnabled(activeTerminal);
-        copy.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+		copy.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 		copy.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			public boolean onMenuItemClick(MenuItem item) {
 				// mark as copying and reset any previous bounds
@@ -1107,8 +1127,8 @@ public class ConsoleFragment extends Fragment {
 				flip.setDisplayedChild(requestedIndex);
 				flip.getCurrentView().findViewById(R.id.terminal_overlay)
 						.startAnimation(fade_out_delayed);
-                TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
-                mListener.onTerminalViewChanged(terminalView.bridge.host);
+				TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
+				mListener.onTerminalViewChanged(terminalView.bridge.host);
 			} catch (NullPointerException npe) {
 				Log.d(TAG, "View went away when we were about to display it", npe);
 			}
