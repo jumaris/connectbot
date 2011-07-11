@@ -51,7 +51,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -114,7 +113,12 @@ public class ConsoleFragment extends Fragment {
 
 	private InputMethodManager inputManager;
 
-	private MenuItem disconnect, copy, paste, portForward, resize, urlscan;
+	private MenuItem mMenuDisconnect;
+	private MenuItem mMenuCopy;
+	private MenuItem mMenuPaste;
+	private MenuItem mMenuPortForwards;
+	private MenuItem mMenuResize;
+	private MenuItem mMenuUrlScan;
 
 	protected TerminalBridge copySource = null;
 	private int lastTouchRow, lastTouchCol;
@@ -626,165 +630,114 @@ public class ConsoleFragment extends Fragment {
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
 		super.onCreateOptionsMenu(menu, menuInflater);
-
-		boolean sessionOpen = false;
-		boolean disconnected = false;
-		boolean canForwardPorts = false;
-		boolean activeTerminal = false;
-
-		if (findCurrentView(R.id.console_flip) != null) {
-			View view = findCurrentView(R.id.console_flip);
-			activeTerminal = (view instanceof TerminalView);
-
-			if (activeTerminal) {
-				TerminalBridge bridge = ((TerminalView) view).bridge;
-				sessionOpen = bridge.isSessionOpen();
-				disconnected = bridge.isDisconnected();
-				canForwardPorts = bridge.canFowardPorts();
-			}
-		}
-
+		menuInflater.inflate(R.menu.host_menu, menu);
 		menu.setQwertyMode(true);
 
-		disconnect = menu.add(R.string.list_host_disconnect);
-		disconnect.setAlphabeticShortcut('w');
-		if (!sessionOpen && disconnected)
-			disconnect.setTitle(R.string.console_menu_close);
-		disconnect.setEnabled(activeTerminal);
-		disconnect.setIcon(android.R.drawable.ic_menu_close_clear_cancel);
-		disconnect.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
-		disconnect.setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			public boolean onMenuItemClick(MenuItem item) {
-				// disconnect or close the currently visible session
-				TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
-				TerminalBridge bridge = terminalView.bridge;
+		mMenuDisconnect = menu.findItem(R.id.disconnect);
+		mMenuCopy = menu.findItem(R.id.copy);
+		mMenuPaste = menu.findItem(R.id.paste);
+		mMenuPortForwards = menu.findItem(R.id.port_forwards);
+		mMenuUrlScan = menu.findItem(R.id.url_scan);
+		mMenuResize = menu.findItem(R.id.resize);
+	}
 
-				bridge.dispatchDisconnect(true);
-				return true;
-			}
-		});
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.disconnect: {
+			// disconnect or close the currently visible session
+			TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
+			TerminalBridge bridge = terminalView.bridge;
 
-		copy = menu.add(R.string.console_menu_copy);
-		copy.setAlphabeticShortcut('c');
-		copy.setIcon(android.R.drawable.ic_menu_set_as);
-		copy.setEnabled(activeTerminal);
-		copy.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
-		copy.setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			public boolean onMenuItemClick(MenuItem item) {
-				// mark as copying and reset any previous bounds
-				TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
-				copySource = terminalView.bridge;
+			bridge.dispatchDisconnect(true);
+			return true;
+		}
+		case R.id.copy: {
+			// mark as copying and reset any previous bounds
+			TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
+			copySource = terminalView.bridge;
 
-				SelectionArea area = copySource.getSelectionArea();
-				area.reset();
-				area.setBounds(copySource.buffer.getColumns(), copySource.buffer.getRows());
+			SelectionArea area = copySource.getSelectionArea();
+			area.reset();
+			area.setBounds(copySource.buffer.getColumns(), copySource.buffer.getRows());
 
-				copySource.setSelectingForCopy(true);
+			copySource.setSelectingForCopy(true);
 
-				// Make sure we show the initial selection
-				copySource.redraw();
+			// Make sure we show the initial selection
+			copySource.redraw();
 
-				Toast.makeText(getActivity(), getString(R.string.console_copy_start), Toast.LENGTH_LONG).show();
-				return true;
-			}
-		});
+			Toast.makeText(getActivity(), getString(R.string.console_copy_start), Toast.LENGTH_LONG).show();
+			return true;
+		}
+		case R.id.paste: {
+			// force insert of clipboard text into current console
+			TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
+			TerminalBridge bridge = terminalView.bridge;
 
-		paste = menu.add(R.string.console_menu_paste);
-		paste.setAlphabeticShortcut('v');
-		paste.setIcon(android.R.drawable.ic_menu_edit);
-		paste.setEnabled(clipboard.hasText() && sessionOpen);
-		paste.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
-		paste.setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			public boolean onMenuItemClick(MenuItem item) {
-				// force insert of clipboard text into current console
-				TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
-				TerminalBridge bridge = terminalView.bridge;
+			// pull string from clipboard and generate all events to force down
+			String clip = clipboard.getText().toString();
+			bridge.injectString(clip);
 
-				// pull string from clipboard and generate all events to force down
-				String clip = clipboard.getText().toString();
-				bridge.injectString(clip);
+			return true;
+		}
+		case R.id.port_forwards: {
+			TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
+			TerminalBridge bridge = terminalView.bridge;
 
-				return true;
-			}
-		});
+			Intent intent = new Intent(getActivity(), PortForwardListActivity.class);
+			intent.putExtra(Intent.EXTRA_TITLE, bridge.host.getId());
+			ConsoleFragment.this.startActivityForResult(intent, REQUEST_EDIT);
+			return true;
+		}
+		case R.id.url_scan: {
+			final TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
 
-		portForward = menu.add(R.string.console_menu_portforwards);
-		portForward.setAlphabeticShortcut('f');
-		portForward.setIcon(android.R.drawable.ic_menu_manage);
-		portForward.setEnabled(sessionOpen && canForwardPorts);
-		portForward.setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			public boolean onMenuItemClick(MenuItem item) {
-				TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
-				TerminalBridge bridge = terminalView.bridge;
+			List<String> urls = terminalView.bridge.scanForURLs();
 
-				Intent intent = new Intent(getActivity(), PortForwardListActivity.class);
-				intent.putExtra(Intent.EXTRA_TITLE, bridge.host.getId());
-				ConsoleFragment.this.startActivityForResult(intent, REQUEST_EDIT);
-				return true;
-			}
-		});
+			Dialog urlDialog = new Dialog(getActivity());
+			urlDialog.setTitle(R.string.console_menu_urlscan);
 
-		urlscan = menu.add(R.string.console_menu_urlscan);
-		urlscan.setAlphabeticShortcut('u');
-		urlscan.setIcon(android.R.drawable.ic_menu_search);
-		urlscan.setEnabled(activeTerminal);
-		urlscan.setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			public boolean onMenuItemClick(MenuItem item) {
-				final TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
+			ListView urlListView = new ListView(getActivity());
+			URLItemListener urlListener = new URLItemListener(getActivity());
+			urlListView.setOnItemClickListener(urlListener);
 
-				List<String> urls = terminalView.bridge.scanForURLs();
+			urlListView.setAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, urls));
+			urlDialog.setContentView(urlListView);
+			urlDialog.show();
 
-				Dialog urlDialog = new Dialog(getActivity());
-				urlDialog.setTitle(R.string.console_menu_urlscan);
+			return true;
+		}
+		case R.id.resize: {
+			final TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
 
-				ListView urlListView = new ListView(getActivity());
-				URLItemListener urlListener = new URLItemListener(getActivity());
-				urlListView.setOnItemClickListener(urlListener);
-
-				urlListView.setAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, urls));
-				urlDialog.setContentView(urlListView);
-				urlDialog.show();
-
-				return true;
-			}
-		});
-
-		resize = menu.add(R.string.console_menu_resize);
-		resize.setAlphabeticShortcut('s');
-		resize.setIcon(android.R.drawable.ic_menu_crop);
-		resize.setEnabled(sessionOpen);
-		resize.setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			public boolean onMenuItemClick(MenuItem item) {
-				final TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
-
-				final View resizeView = inflater.inflate(R.layout.dia_resize, null, false);
-				new AlertDialog.Builder(getActivity())
-					.setView(resizeView)
-					.setPositiveButton(R.string.button_resize, new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int which) {
-							int width, height;
-							try {
-								width = Integer.parseInt(((EditText) resizeView
-										.findViewById(R.id.width))
-										.getText().toString());
-								height = Integer.parseInt(((EditText) resizeView
-										.findViewById(R.id.height))
-										.getText().toString());
-							} catch (NumberFormatException nfe) {
-								// TODO change this to a real dialog where we can
-								// make the input boxes turn red to indicate an error.
-								return;
-							}
-
-							terminalView.forceSize(width, height);
+			final View resizeView = inflater.inflate(R.layout.dia_resize, null, false);
+			new AlertDialog.Builder(getActivity())
+				.setView(resizeView)
+				.setPositiveButton(R.string.button_resize, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						int width, height;
+						try {
+							width = Integer.parseInt(((EditText) resizeView
+									.findViewById(R.id.width))
+									.getText().toString());
+							height = Integer.parseInt(((EditText) resizeView
+									.findViewById(R.id.height))
+									.getText().toString());
+						} catch (NumberFormatException nfe) {
+							// TODO change this to a real dialog where we can
+							// make the input boxes turn red to indicate an error.
+							return;
 						}
-					}).setNegativeButton(android.R.string.cancel, null).create().show();
 
-				return true;
-			}
-		});
+						terminalView.forceSize(width, height);
+					}
+				}).setNegativeButton(android.R.string.cancel, null).create().show();
 
-		return;
+			return true;
+		}
+		default:
+			return super.onOptionsItemSelected(item);
+		}
 	}
 
 	@Override
@@ -806,18 +759,17 @@ public class ConsoleFragment extends Fragment {
 			canForwardPorts = bridge.canFowardPorts();
 		}
 
-		disconnect.setEnabled(activeTerminal);
+		mMenuDisconnect.setEnabled(activeTerminal);
 		if (sessionOpen || !disconnected)
-			disconnect.setTitle(R.string.list_host_disconnect);
+			mMenuDisconnect.setTitle(R.string.list_host_disconnect);
 		else
-			disconnect.setTitle(R.string.console_menu_close);
-		copy.setEnabled(activeTerminal);
-		paste.setEnabled(clipboard.hasText() && sessionOpen);
-		portForward.setEnabled(sessionOpen && canForwardPorts);
-		urlscan.setEnabled(activeTerminal);
-		resize.setEnabled(sessionOpen);
+			mMenuDisconnect.setTitle(R.string.console_menu_close);
 
-		return;
+		mMenuCopy.setEnabled(activeTerminal);
+		mMenuPaste.setEnabled(clipboard.hasText() && sessionOpen);
+		mMenuPortForwards.setEnabled(sessionOpen && canForwardPorts);
+		mMenuUrlScan.setEnabled(activeTerminal);
+		mMenuResize.setEnabled(sessionOpen);
 	}
 
 	@Override
