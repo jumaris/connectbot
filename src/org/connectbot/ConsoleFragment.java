@@ -192,7 +192,7 @@ public class ConsoleFragment extends Fragment {
 		flip.removeAllViews();
 
 		final String requestedNickname = (requested != null) ? requested.getFragment() : null;
-		int requestedIndex = 0;
+		int requestedIndex = -1;
 
 		TerminalBridge requestedBridge = bound.getConnectedBridge(requestedNickname);
 
@@ -215,7 +215,9 @@ public class ConsoleFragment extends Fragment {
 				requestedIndex = currentIndex;
 		}
 
-		setDisplayedTerminal(requestedIndex);
+		if (requestedIndex >= 0) {
+			setDisplayedTerminal(requestedIndex);
+		}
 	}
 
 	public void destroyConsoles() {
