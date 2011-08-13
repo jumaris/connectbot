@@ -330,6 +330,8 @@ public class ColorsActivity extends Activity implements OnItemClickListener, OnC
 
 			return true;
 		}
+		default:
+			return false;
 		}
 	}
 }

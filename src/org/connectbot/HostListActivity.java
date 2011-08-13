@@ -21,8 +21,6 @@ import org.connectbot.service.TerminalManager;
 import org.connectbot.util.HostDatabase;
 import org.connectbot.util.UpdateHelper;
 
-import android.app.Activity;
-import android.app.FragmentTransaction;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -30,28 +28,30 @@ import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
 
 import com.nullwire.trace.ExceptionHandler;
 
-public class HostListActivity extends Activity implements
+public class HostListActivity extends FragmentActivity implements
 		HostListFragment.HostListFragmentContainer {
-	protected TerminalManager bound = null;
+	protected TerminalManager mManager = null;
 
-	HostListFragment fragmentHostList;
+	HostListFragment mFragmentHostList;
 
-	HostDatabase hostdb;
+	HostDatabase mHostDb;
 
-	private ServiceConnection connection = new ServiceConnection() {
+	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
-			bound = ((TerminalManager.TerminalBinder) service).getService();
+			mManager = ((TerminalManager.TerminalBinder) service).getService();
 
 			// update our listview binder to find the service
-			fragmentHostList.updateList();
+			mFragmentHostList.updateList();
 		}
 
 		public void onServiceDisconnected(ComponentName className) {
-			bound = null;
-			fragmentHostList.updateList();
+			mManager = null;
+			mFragmentHostList.updateList();
 		}
 	};
 
@@ -60,14 +60,14 @@ public class HostListActivity extends Activity implements
 		super.onStart();
 
 		// start the terminal manager service
-		this.bindService(new Intent(this, TerminalManager.class), connection,
+		this.bindService(new Intent(this, TerminalManager.class), mConnection,
 				Context.BIND_AUTO_CREATE);
 	}
 
 	@Override
 	public void onStop() {
 		super.onStop();
-		this.unbindService(connection);
+		unbindService(mConnection);
 	}
 
 	@Override
@@ -101,10 +101,10 @@ public class HostListActivity extends Activity implements
 		// start thread to check for new version
 		new UpdateHelper(this);
 
-		fragmentHostList = HostListFragment.newInstance();
+		mFragmentHostList = HostListFragment.newInstance();
 
-		FragmentTransaction ft = getFragmentManager().beginTransaction();
-		ft.replace(R.id.listFrame, fragmentHostList);
+		FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+		ft.replace(R.id.listFrame, mFragmentHostList);
 		// ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
 		ft.commit();
 	}
@@ -118,6 +118,6 @@ public class HostListActivity extends Activity implements
 	}
 
 	public TerminalManager getTerminalManager() {
-		return bound;
+		return mManager;
 	}
 }

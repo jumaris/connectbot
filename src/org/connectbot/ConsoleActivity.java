@@ -21,8 +21,6 @@ import org.connectbot.bean.HostBean;
 import org.connectbot.service.TerminalBridge;
 import org.connectbot.service.TerminalManager;
 
-import android.app.Activity;
-import android.app.FragmentTransaction;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -31,6 +29,8 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.Surface;
 import android.view.View;
@@ -38,7 +38,7 @@ import android.view.WindowManager;
 
 import com.nullwire.trace.ExceptionHandler;
 
-public class ConsoleActivity extends Activity implements ConsoleFragment.ConsoleFragmentContainer, HostListFragment.HostListFragmentContainer {
+public class ConsoleActivity extends FragmentActivity implements ConsoleFragment.ConsoleFragmentContainer, HostListFragment.HostListFragmentContainer {
 	public final static String TAG = "ConnectBot.ConsoleActivity";
 
 	protected TerminalManager bound = null;
@@ -94,7 +94,7 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 
 		fragmentConsole = ConsoleFragment.newInstance();
 
-		FragmentTransaction ft = getFragmentManager().beginTransaction();
+		FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
 		ft.replace(R.id.consoleFrame, fragmentConsole);
 		if (findViewById(R.id.listFrame) != null) {
 			fragmentHostList = HostListFragment.newInstance();
@@ -226,7 +226,7 @@ public class ConsoleActivity extends Activity implements ConsoleFragment.Console
 	public void onTerminalViewChanged(HostBean host) {
 		fragmentHostList.updateList();
 		fragmentHostList.setCurrentSelected(host);
-		invalidateOptionsMenu();
+		//invalidateOptionsMenu();
 	}
 
 	public boolean startConsoleActivity(Uri uri) {
