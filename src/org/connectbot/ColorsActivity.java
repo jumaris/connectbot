@@ -31,8 +31,8 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -301,32 +301,35 @@ public class ColorsActivity extends Activity implements OnItemClickListener, OnC
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
 
-		MenuItem reset = menu.add(R.string.menu_colors_reset);
-		reset.setAlphabeticShortcut('r');
-		reset.setNumericShortcut('1');
-		reset.setIcon(android.R.drawable.ic_menu_revert);
-		reset.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
-		reset.setOnMenuItemClickListener(new OnMenuItemClickListener() {
-			public boolean onMenuItemClick(MenuItem arg0) {
-				// Reset each individual color to defaults.
-				for (int i = 0; i < Colors.defaults.length; i++) {
-					if (mColorList.get(i) != Colors.defaults[i]) {
-						hostdb.setGlobalColor(i, Colors.defaults[i]);
-						mColorList.set(i, Colors.defaults[i]);
-					}
-				}
-				mColorGrid.invalidateViews();
+		final MenuInflater menuInflater = getMenuInflater();
+		menuInflater.inflate(R.menu.color_menu, menu);
 
-				// Reset the default FG/BG colors as well.
-				mFgSpinner.setSelection(HostDatabase.DEFAULT_FG_COLOR);
-				mBgSpinner.setSelection(HostDatabase.DEFAULT_BG_COLOR);
-				hostdb.setDefaultColorsForScheme(HostDatabase.DEFAULT_COLOR_SCHEME,
-						HostDatabase.DEFAULT_FG_COLOR, HostDatabase.DEFAULT_BG_COLOR);
-
-				return true;
-			}
-		});
+		menu.setQwertyMode(true);
 
 		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.reset: {
+			// Reset each individual color to defaults.
+			for (int i = 0; i < Colors.defaults.length; i++) {
+				if (mColorList.get(i) != Colors.defaults[i]) {
+					hostdb.setGlobalColor(i, Colors.defaults[i]);
+					mColorList.set(i, Colors.defaults[i]);
+				}
+			}
+			mColorGrid.invalidateViews();
+
+			// Reset the default FG/BG colors as well.
+			mFgSpinner.setSelection(HostDatabase.DEFAULT_FG_COLOR);
+			mBgSpinner.setSelection(HostDatabase.DEFAULT_BG_COLOR);
+			hostdb.setDefaultColorsForScheme(HostDatabase.DEFAULT_COLOR_SCHEME,
+					HostDatabase.DEFAULT_FG_COLOR, HostDatabase.DEFAULT_BG_COLOR);
+
+			return true;
+		}
+		}
 	}
 }
