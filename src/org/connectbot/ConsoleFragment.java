@@ -966,7 +966,7 @@ public class ConsoleFragment extends Fragment {
 		}
 	}
 
-	private class URLItemListener implements OnItemClickListener {
+	private static class URLItemListener implements OnItemClickListener {
 		private WeakReference<Context> contextRef;
 
 		URLItemListener(Context context) {
