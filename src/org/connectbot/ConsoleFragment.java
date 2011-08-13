@@ -125,7 +125,7 @@ public class ConsoleFragment extends Fragment {
 
 	private boolean forcedOrientation;
 
-	private Handler handler = new Handler();
+	private Handler mUIHandler = new Handler();
 
 	private ImageView mKeyboardButton;
 
@@ -138,10 +138,10 @@ public class ConsoleFragment extends Fragment {
 	}
 
 	/**
-	 * Create a new instance of HostListFragment
+	 * Create a new instance of ConsoleFragment
 	 */
 	static ConsoleFragment newInstance() {
-		ConsoleFragment f = new ConsoleFragment();
+		final ConsoleFragment f = new ConsoleFragment();
 
 		// Supply num input as an argument.
 		/*
@@ -178,7 +178,7 @@ public class ConsoleFragment extends Fragment {
 
 			// someone below us requested to display a password dialog
 			// they are sending nickname and requested
-			TerminalBridge bridge = (TerminalBridge)msg.obj;
+			final TerminalBridge bridge = (TerminalBridge) msg.obj;
 
 			if (bridge.isAwaitingClose())
 				closeBridge(bridge);
@@ -186,7 +186,7 @@ public class ConsoleFragment extends Fragment {
 	};
 
 	public void setupConsoles() {
-		TerminalManager bound = mListener.getTerminalManager();
+		final TerminalManager bound = mListener.getTerminalManager();
 
 		// clear out any existing bridges and record requested index
 		flip.removeAllViews();
@@ -208,7 +208,6 @@ public class ConsoleFragment extends Fragment {
 
 		// create views for all bridges on this service
 		for (TerminalBridge bridge : bound.bridges) {
-
 			final int currentIndex = addNewTerminalView(bridge);
 
 			// check to see if this bridge was requested
@@ -260,16 +259,24 @@ public class ConsoleFragment extends Fragment {
 	}
 
 	protected View findCurrentView(int id) {
-		if (flip == null) return null;
-		View view = flip.getCurrentView();
-		if(view == null) return null;
+		if (flip == null)
+			return null;
+
+		final View view = flip.getCurrentView();
+
+		if (view == null)
+			return null;
+
 		return view.findViewById(id);
 	}
 
 	protected PromptHelper getCurrentPromptHelper() {
-		View view = findCurrentView(R.id.console_flip);
-		if(!(view instanceof TerminalView)) return null;
-		return ((TerminalView)view).bridge.promptHelper;
+		final View view = findCurrentView(R.id.console_flip);
+
+		if (!(view instanceof TerminalView))
+			return null;
+
+		return ((TerminalView) view).bridge.promptHelper;
 	}
 
 	protected void hideAllPrompts() {
@@ -301,7 +308,7 @@ public class ConsoleFragment extends Fragment {
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		View v = inflater.inflate(R.layout.frg_console, container, false);
+		final View v = inflater.inflate(R.layout.frg_console, container, false);
 
 		this.inflater = inflater;
 
@@ -578,7 +585,7 @@ public class ConsoleFragment extends Fragment {
 					keyboardGroup.startAnimation(keyboard_fade_in);
 					keyboardGroup.setVisibility(View.VISIBLE);
 
-					handler.postDelayed(new Runnable() {
+					mUIHandler.postDelayed(new Runnable() {
 						public void run() {
 							if (keyboardGroup.getVisibility() == View.GONE)
 								return;
@@ -646,18 +653,18 @@ public class ConsoleFragment extends Fragment {
 		switch (item.getItemId()) {
 		case R.id.disconnect: {
 			// disconnect or close the currently visible session
-			TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
-			TerminalBridge bridge = terminalView.bridge;
+			final TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
+			final TerminalBridge bridge = terminalView.bridge;
 
 			bridge.dispatchDisconnect(true);
 			return true;
 		}
 		case R.id.copy: {
 			// mark as copying and reset any previous bounds
-			TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
+			final TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
 			copySource = terminalView.bridge;
 
-			SelectionArea area = copySource.getSelectionArea();
+			final SelectionArea area = copySource.getSelectionArea();
 			area.reset();
 			area.setBounds(copySource.buffer.getColumns(), copySource.buffer.getRows());
 
@@ -671,34 +678,37 @@ public class ConsoleFragment extends Fragment {
 		}
 		case R.id.paste: {
 			// force insert of clipboard text into current console
-			TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
-			TerminalBridge bridge = terminalView.bridge;
+			final TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
+			final TerminalBridge bridge = terminalView.bridge;
 
 			// pull string from clipboard and generate all events to force down
-			String clip = clipboard.getText().toString();
+			final String clip = clipboard.getText().toString();
 			bridge.injectString(clip);
 
 			return true;
 		}
 		case R.id.port_forwards: {
-			TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
-			TerminalBridge bridge = terminalView.bridge;
+			final TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
+			final TerminalBridge bridge = terminalView.bridge;
 
-			Intent intent = new Intent(getActivity(), PortForwardListActivity.class);
+			final Intent intent = new Intent(getActivity(), PortForwardListActivity.class);
 			intent.putExtra(Intent.EXTRA_TITLE, bridge.host.getId());
-			ConsoleFragment.this.startActivityForResult(intent, REQUEST_EDIT);
+
+			startActivityForResult(intent, REQUEST_EDIT);
+
 			return true;
 		}
 		case R.id.url_scan: {
 			final TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
 
-			List<String> urls = terminalView.bridge.scanForURLs();
+			final List<String> urls = terminalView.bridge.scanForURLs();
 
-			Dialog urlDialog = new Dialog(getActivity());
+			final Dialog urlDialog = new Dialog(getActivity());
 			urlDialog.setTitle(R.string.console_menu_urlscan);
 
 			ListView urlListView = new ListView(getActivity());
-			URLItemListener urlListener = new URLItemListener(getActivity());
+
+			final URLItemListener urlListener = new URLItemListener(getActivity());
 			urlListView.setOnItemClickListener(urlListener);
 
 			urlListView.setAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, urls));
@@ -715,7 +725,7 @@ public class ConsoleFragment extends Fragment {
 				.setView(resizeView)
 				.setPositiveButton(R.string.button_resize, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						int width, height;
+						final int width, height;
 						try {
 							width = Integer.parseInt(((EditText) resizeView
 									.findViewById(R.id.width))
@@ -747,16 +757,20 @@ public class ConsoleFragment extends Fragment {
 		getActivity().setVolumeControlStream(AudioManager.STREAM_NOTIFICATION);
 
 		final View view = findCurrentView(R.id.console_flip);
-		boolean activeTerminal = (view instanceof TerminalView);
-		boolean sessionOpen = false;
-		boolean disconnected = false;
-		boolean canForwardPorts = false;
+		final boolean activeTerminal = (view instanceof TerminalView);
+		final boolean sessionOpen;
+		final boolean disconnected;
+		final boolean canForwardPorts;
 
 		if (activeTerminal) {
-			TerminalBridge bridge = ((TerminalView) view).bridge;
+			final TerminalBridge bridge = ((TerminalView) view).bridge;
 			sessionOpen = bridge.isSessionOpen();
 			disconnected = bridge.isDisconnected();
 			canForwardPorts = bridge.canFowardPorts();
+		} else {
+			sessionOpen = false;
+			disconnected = false;
+			canForwardPorts = false;
 		}
 
 		mMenuDisconnect.setEnabled(activeTerminal);
@@ -789,7 +803,7 @@ public class ConsoleFragment extends Fragment {
 		super.onPause();
 		Log.d(TAG, "onPause called");
 
-		TerminalManager bound = mListener.getTerminalManager();
+		final TerminalManager bound = mListener.getTerminalManager();
 		if (forcedOrientation && bound != null)
 			bound.setResizeAllowed(false);
 	}
@@ -889,7 +903,7 @@ public class ConsoleFragment extends Fragment {
 				}
 			}
 
-			ConsoleFragment.this.updateDefault();
+			updateDefault();
 
 			if (shouldAnimate) {
 				// show overlay on new slide and start fade
@@ -974,19 +988,19 @@ public class ConsoleFragment extends Fragment {
 		}
 
 		public void onItemClick(AdapterView<?> arg0, View view, int position, long id) {
-			Context context = contextRef.get();
+			final Context context = contextRef == null ? null : contextRef.get();
 
 			if (context == null)
 				return;
 
 			try {
-				TextView urlView = (TextView) view;
+				final TextView urlView = (TextView) view;
 
 				String url = urlView.getText().toString();
 				if (url.indexOf("://") < 0)
 					url = "http://" + url;
 
-				Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+				final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
 				context.startActivity(intent);
 			} catch (Exception e) {
 				Log.e(TAG, "couldn't open URL", e);
