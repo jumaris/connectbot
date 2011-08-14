@@ -89,13 +89,20 @@
     </target>
 
     <target name="proguard-execute" if="have.proguard">
+        <path id="fullclasspath">
+            <pathelement path="${android.jar}"/>
+	    <fileset dir="${jar.libs.absolute.dir}" includes="*.jar"/>
+        </path>
+
+        <property name="libraryjarpath" refid="fullclasspath"/>
+
         <mkdir dir="${out.dex.input.absolute.dir}"/>
         <taskdef resource="proguard/ant/task.properties"
                 classpath="tools/proguard.jar" />
         <proguard configuration="proguard.flags" printusage="${out.dir}/proguard.usage">
             <injar path="${out.classes.dir}"/>
             <outjar path="${proguard.out.dir}"/>
-            <libraryjar path="${android.jar}"/>
+            <libraryjar path="${libraryjarpath}"/>
         </proguard>
     </target>
 
