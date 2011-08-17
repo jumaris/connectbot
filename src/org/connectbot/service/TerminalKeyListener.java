@@ -89,51 +89,21 @@ public class TerminalKeyListener implements OnKeyListener, OnSharedPreferenceCha
 
 	private final SharedPreferences prefs;
 
-    private void writeToBridge(final int c) {
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    bridge.transport.write(c);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
+	private void writeToBridge(final int c) throws IOException {
+		bridge.transport.write(c);
+	}
 
-    private void writeToBridge(final byte[] c) {
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    bridge.transport.write(c);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
+	private void writeToBridge(final byte[] c) throws IOException {
+		bridge.transport.write(c);
+	}
 
-    private void vt320_keyPressed(final int key, final char c) {
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    ((vt320) buffer).keyPressed(key, c,
-				    getStateForBuffer());
-                } catch (Exception e) { e.printStackTrace(); }
-            }
-        }).start();
-    }
+	private void vt320_keyPressed(final int key, final char c) {
+		((vt320) buffer).keyPressed(key, c, getStateForBuffer());
+	}
 
-    private void vt320_keyTyped(final int key, final char c) {
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    ((vt320) buffer).keyTyped(key, c,
-				    getStateForBuffer());
-                } catch (Exception e) { e.printStackTrace(); }
-            }
-        }).start();
-    }
+	private void vt320_keyTyped(final int key, final char c) {
+		((vt320) buffer).keyTyped(key, c, getStateForBuffer());
+	}
 
 	public TerminalKeyListener(TerminalManager manager,
 			TerminalBridge bridge,
@@ -177,25 +147,25 @@ public class TerminalKeyListener implements OnKeyListener, OnSharedPreferenceCha
 					if (keyCode == KeyEvent.KEYCODE_ALT_RIGHT
 							&& (metaState & META_SLASH) != 0) {
 						metaState &= ~(META_SLASH | META_TRANSIENT);
-                        writeToBridge('/');
+						writeToBridge('/');
 						return true;
 					} else if (keyCode == KeyEvent.KEYCODE_SHIFT_RIGHT
 							&& (metaState & META_TAB) != 0) {
 						metaState &= ~(META_TAB | META_TRANSIENT);
-                        writeToBridge(0x09);
+						writeToBridge(0x09);
 						return true;
 					}
 				} else if (PreferenceConstants.KEYMODE_LEFT.equals(keymode)) {
 					if (keyCode == KeyEvent.KEYCODE_ALT_LEFT
 							&& (metaState & META_SLASH) != 0) {
 						metaState &= ~(META_SLASH | META_TRANSIENT);
-                        writeToBridge('/');
+						writeToBridge('/');
 						return true;
 					} else if (keyCode == KeyEvent.KEYCODE_SHIFT_LEFT
 							&& (metaState & META_TAB) != 0) {
 						metaState &= ~(META_TAB | META_TRANSIENT);
 
-                        writeToBridge(0x09);
+						writeToBridge(0x09);
 						return true;
 					}
 				}
@@ -221,7 +191,7 @@ public class TerminalKeyListener implements OnKeyListener, OnSharedPreferenceCha
 			if (keyCode == KeyEvent.KEYCODE_UNKNOWN &&
 					event.getAction() == KeyEvent.ACTION_MULTIPLE) {
 				byte[] input = event.getCharacters().getBytes(encoding);
-                writeToBridge(input);
+				writeToBridge(input);
 				return true;
 			}
 
@@ -254,6 +224,7 @@ public class TerminalKeyListener implements OnKeyListener, OnSharedPreferenceCha
 			}
 
 			final boolean printing = (key != 0);
+			if (key == 10) key = 13; // translate LF to CR
 
 			// otherwise pass through to existing session
 			// print normal keys
@@ -287,11 +258,10 @@ public class TerminalKeyListener implements OnKeyListener, OnSharedPreferenceCha
 					return true;
 
 				if (key < 0x80)
-                    writeToBridge(key);
+					writeToBridge(key);
 				else
 					// TODO write encoding routine that doesn't allocate each time
-                    writeToBridge(new String(Character.toChars(key))
-							.getBytes(encoding));
+					writeToBridge(new String(Character.toChars(key)).getBytes(encoding));
 
 				return true;
 			}
@@ -382,25 +352,25 @@ public class TerminalKeyListener implements OnKeyListener, OnSharedPreferenceCha
 						PreferenceConstants.CAMERA,
 						PreferenceConstants.CAMERA_CTRLA_SPACE);
 				if(PreferenceConstants.CAMERA_CTRLA_SPACE.equals(camera)) {
-                    writeToBridge(0x01);
-                    writeToBridge(' ');
+					writeToBridge(0x01);
+					writeToBridge(' ');
 				} else if(PreferenceConstants.CAMERA_CTRLA.equals(camera)) {
-                    writeToBridge(0x01);
+					writeToBridge(0x01);
 				} else if(PreferenceConstants.CAMERA_ESC.equals(camera)) {
 					vt320_keyTyped(vt320.KEY_ESCAPE, ' ');
 				} else if(PreferenceConstants.CAMERA_ESC_A.equals(camera)) {
-                    vt320_keyTyped(vt320.KEY_ESCAPE, ' ');
-                    writeToBridge('a');
+					vt320_keyTyped(vt320.KEY_ESCAPE, ' ');
+					writeToBridge('a');
 				}
 
 				break;
 
 			case KeyEvent.KEYCODE_DEL:
-                vt320_keyPressed(vt320.KEY_BACK_SPACE, ' ');
+				vt320_keyPressed(vt320.KEY_BACK_SPACE, ' ');
 				metaState &= ~META_TRANSIENT;
 				return true;
 			case KeyEvent.KEYCODE_ENTER:
-                vt320_keyPressed(vt320.KEY_ENTER, ' ');
+				vt320_keyPressed(vt320.KEY_ENTER, ' ');
 				metaState &= ~META_TRANSIENT;
 				return true;
 
@@ -409,7 +379,7 @@ public class TerminalKeyListener implements OnKeyListener, OnSharedPreferenceCha
 					selectionArea.decrementColumn();
 					bridge.redraw();
 				} else {
-                    vt320_keyPressed(vt320.KEY_LEFT, ' ');
+					vt320_keyPressed(vt320.KEY_LEFT, ' ');
 					metaState &= ~META_TRANSIENT;
 					bridge.tryKeyVibrate();
 				}
@@ -420,7 +390,7 @@ public class TerminalKeyListener implements OnKeyListener, OnSharedPreferenceCha
 					selectionArea.decrementRow();
 					bridge.redraw();
 				} else {
-                    vt320_keyPressed(vt320.KEY_UP, ' ');
+					vt320_keyPressed(vt320.KEY_UP, ' ');
 					metaState &= ~META_TRANSIENT;
 					bridge.tryKeyVibrate();
 				}
@@ -431,7 +401,7 @@ public class TerminalKeyListener implements OnKeyListener, OnSharedPreferenceCha
 					selectionArea.incrementRow();
 					bridge.redraw();
 				} else {
-                    vt320_keyPressed(vt320.KEY_DOWN, ' ');
+					vt320_keyPressed(vt320.KEY_DOWN, ' ');
 					metaState &= ~META_TRANSIENT;
 					bridge.tryKeyVibrate();
 				}
@@ -442,7 +412,7 @@ public class TerminalKeyListener implements OnKeyListener, OnSharedPreferenceCha
 					selectionArea.incrementColumn();
 					bridge.redraw();
 				} else {
-                    vt320_keyPressed(vt320.KEY_RIGHT, ' ');
+       					vt320_keyPressed(vt320.KEY_RIGHT, ' ');
 					metaState &= ~META_TRANSIENT;
 					bridge.tryKeyVibrate();
 				}
@@ -513,7 +483,7 @@ public class TerminalKeyListener implements OnKeyListener, OnSharedPreferenceCha
 	}
 
 	public void sendEscape() {
-        vt320_keyTyped(vt320.KEY_ESCAPE, ' ');
+		vt320_keyTyped(vt320.KEY_ESCAPE, ' ');
 	}
 
 	/**
@@ -523,7 +493,7 @@ public class TerminalKeyListener implements OnKeyListener, OnSharedPreferenceCha
 	private boolean sendFunctionKey(int keyCode) {
 		switch (keyCode) {
 		case KeyEvent.KEYCODE_1:
-            vt320_keyPressed(vt320.KEY_F1, ' ');
+			vt320_keyPressed(vt320.KEY_F1, ' ');
 			return true;
 		case KeyEvent.KEYCODE_2:
 			vt320_keyPressed(vt320.KEY_F2, ' ');
