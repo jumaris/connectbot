@@ -3,9 +3,6 @@
  */
 package com.nullwire.trace;
 
-import java.lang.ref.WeakReference;
-
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.util.Log;
@@ -16,8 +13,6 @@ import android.util.Log;
  */
 public class ExceptionClickListener implements OnClickListener {
 	public static String TAG = "com.nullwire.trace.ExceptionClickListener";
-
-	WeakReference<Context> context;
 
 	public ExceptionClickListener() { }
 
