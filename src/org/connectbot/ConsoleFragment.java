@@ -171,20 +171,6 @@ public class ConsoleFragment extends Fragment {
 		}
 	};
 
-	public Handler disconnectHandler = new Handler() {
-		@Override
-		public void handleMessage(Message msg) {
-			Log.d(TAG, "Someone sending HANDLE_DISCONNECT to parentHandler");
-
-			// someone below us requested to display a password dialog
-			// they are sending nickname and requested
-			final TerminalBridge bridge = (TerminalBridge) msg.obj;
-
-			if (bridge.isAwaitingClose())
-				closeBridge(bridge);
-		}
-	};
-
 	public void setupConsoles() {
 		final TerminalManager bound = mListener.getTerminalManager();
 
@@ -226,9 +212,12 @@ public class ConsoleFragment extends Fragment {
 	}
 
 	/**
-	 * @param bridge
+	 * Removes the view associated with a {@code TerminalBridge} animating if
+	 * necessary. This should only be called from the UI thread.
+	 *
+	 * @param bridge {@code TerminalBridge} which to remove views.
 	 */
-	public void closeBridge(final TerminalBridge bridge) {
+	public void removeBridgeView(final TerminalBridge bridge) {
 		synchronized (flip) {
 			final int flipIndex = getFlipIndex(bridge);
 
@@ -246,16 +235,14 @@ public class ConsoleFragment extends Fragment {
 						numChildren > 0) {
 					flip.setDisplayedChild(numChildren - 1);
 				}
-
-				updateEmptyVisible();
 			}
 
 			// If we just closed the last bridge, go back to the previous activity.
 			if (flip.getChildCount() == 0) {
-				//getActivity().finish();
 				mListener.onTerminalViewChanged(null);
-				//getActivity().invalidateOptionsMenu();
+				flip.setVisibility(View.GONE);
 				hideAllPrompts();
+				updateEmptyVisible();
 			}
 		}
 	}
@@ -1059,6 +1046,7 @@ public class ConsoleFragment extends Fragment {
 		synchronized (flip) {
 			// finally attach to the flipper
 			flip.addView(view);
+			flip.setVisibility(View.VISIBLE);
 			return flip.getChildCount() - 1;
 		}
 	}

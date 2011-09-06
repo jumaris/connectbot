@@ -18,6 +18,7 @@
 package org.connectbot;
 
 import org.connectbot.bean.HostBean;
+import org.connectbot.service.OnBridgeConnectionListener;
 import org.connectbot.service.TerminalBridge;
 import org.connectbot.service.TerminalManager;
 
@@ -28,7 +29,9 @@ import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
@@ -38,7 +41,7 @@ import android.view.WindowManager;
 
 import com.nullwire.trace.ExceptionHandler;
 
-public class ConsoleActivity extends FragmentActivity implements ConsoleFragment.ConsoleFragmentContainer, HostListFragment.HostListFragmentContainer {
+public class ConsoleActivity extends FragmentActivity implements ConsoleFragment.ConsoleFragmentContainer, HostListFragment.HostListFragmentContainer, OnBridgeConnectionListener {
 	public final static String TAG = "ConnectBot.ConsoleActivity";
 
 	protected TerminalManager bound = null;
@@ -52,12 +55,33 @@ public class ConsoleActivity extends FragmentActivity implements ConsoleFragment
 	ConsoleFragment fragmentConsole;
 	HostListFragment fragmentHostList;
 
+	private static final int MSG_INVALIDATE_MENU = 1;
+
+	private static final int MSG_CLOSE_BRIDGE = 2;
+
+	private Handler mUiHandler = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			switch (msg.what) {
+			case MSG_INVALIDATE_MENU:
+				invalidateOptionsMenu();
+				break;
+			case MSG_CLOSE_BRIDGE:
+				final TerminalBridge bridge = (TerminalBridge) msg.obj;
+				if (bridge.isAwaitingClose()) {
+					fragmentConsole.removeBridgeView(bridge);
+				}
+				break;
+			}
+		}
+	};
+
 	private ServiceConnection connection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			bound = ((TerminalManager.TerminalBinder) service).getService();
 
 			// let manager know about our event handling services
-			bound.disconnectHandler = fragmentConsole.disconnectHandler;
+			bound.addOnBridgeConnectionListener(ConsoleActivity.this);
 
 			Log.d(TAG, String.format("Connected to TerminalManager and found bridges.size=%d", bound.bridges.size()));
 
@@ -72,13 +96,18 @@ public class ConsoleActivity extends FragmentActivity implements ConsoleFragment
 		public void onServiceDisconnected(ComponentName className) {
 			// tell each bridge to forget about our prompt handler
 			synchronized (bound.bridges) {
-				for(TerminalBridge bridge : bound.bridges)
+				for (TerminalBridge bridge : bound.bridges)
 					bridge.promptHelper.setHandler(null);
 			}
 
+			bound.removeOnBridgeConnectionListener(ConsoleActivity.this);
 			fragmentConsole.destroyConsoles();
+
+			if (fragmentHostList != null) {
+				fragmentHostList.updateList();
+			}
+
 			bound = null;
-			if (fragmentHostList != null) fragmentHostList.updateList();
 		}
 	};
 
@@ -224,14 +253,31 @@ public class ConsoleActivity extends FragmentActivity implements ConsoleFragment
 	}
 
 	public void onTerminalViewChanged(HostBean host) {
-		fragmentHostList.updateList();
+		fragmentHostList.updateHandler.sendEmptyMessage(-1);
 		fragmentHostList.setCurrentSelected(host);
-		//invalidateOptionsMenu();
+		mUiHandler.sendEmptyMessage(MSG_INVALIDATE_MENU);
 	}
 
 	public boolean startConsoleActivity(Uri uri) {
 		fragmentConsole.startConsole(uri);
 
 		return true;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.connectbot.service.OnBridgeConnectionListener#onBridgeConnected(org.connectbot.service.TerminalBridge)
+	 */
+	public void onBridgeConnected(TerminalBridge bridge) {
+		mUiHandler.sendEmptyMessage(MSG_INVALIDATE_MENU);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.connectbot.service.OnBridgeConnectionListener#onBridgeDisconnected(org.connectbot.service.TerminalBridge)
+	 */
+	public void onBridgeDisconnected(TerminalBridge bridge) {
+		final Message msg = mUiHandler.obtainMessage(MSG_CLOSE_BRIDGE, bridge);
+		mUiHandler.sendMessage(msg);
+
+		mUiHandler.sendEmptyMessage(MSG_INVALIDATE_MENU);
 	}
 }

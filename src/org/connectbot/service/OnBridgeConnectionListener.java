@@ -17,6 +17,7 @@
 
 package org.connectbot.service;
 
-public interface BridgeDisconnectedListener {
-	public void onDisconnected(TerminalBridge bridge);
+public interface OnBridgeConnectionListener {
+	public void onBridgeConnected(TerminalBridge bridge);
+	public void onBridgeDisconnected(TerminalBridge bridge);
 }

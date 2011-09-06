@@ -23,12 +23,15 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Map.Entry;
 
 import org.connectbot.R;
 import org.connectbot.bean.HostBean;
@@ -52,9 +55,7 @@ import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.net.Uri;
 import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -68,7 +69,7 @@ import com.nullwire.trace.ExceptionHandler;
  *
  * @author jsharkey
  */
-public class TerminalManager extends Service implements BridgeDisconnectedListener, OnSharedPreferenceChangeListener {
+public class TerminalManager extends Service implements OnBridgeConnectionListener, OnSharedPreferenceChangeListener {
 	public final static String TAG = "ConnectBot.TerminalManager";
 
 	public List<TerminalBridge> bridges = new LinkedList<TerminalBridge>();
@@ -77,11 +78,11 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 	public Map<String, WeakReference<TerminalBridge>> mNicknameBridgeMap =
 		new HashMap<String, WeakReference<TerminalBridge>>();
 
+	private final Set<OnBridgeConnectionListener> mConnectionListeners = new HashSet<OnBridgeConnectionListener>();
+
 	public TerminalBridge defaultBridge = null;
 
 	public List<HostBean> disconnected = new LinkedList<HostBean>();
-
-	public Handler disconnectHandler = null;
 
 	public Map<String, KeyHolder> loadedKeypairs = new HashMap<String, KeyHolder>();
 
@@ -117,6 +118,8 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 			= new LinkedList<WeakReference<TerminalBridge>>();
 
 	public boolean hardKeyboardHidden;
+
+	private Object[] mLock = new Object[0];
 
 	@Override
 	public void onCreate() {
@@ -167,6 +170,16 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 
 	private void updateSavingKeys() {
 		savingKeys = prefs.getBoolean(PreferenceConstants.MEMKEYS, true);
+	}
+
+	public void onBridgeConnected(TerminalBridge bridge) {
+		synchronized (mLock) {
+			final Iterator<OnBridgeConnectionListener> i = mConnectionListeners.iterator();
+			while (i.hasNext()) {
+				final OnBridgeConnectionListener listener = i.next();
+				listener.onBridgeConnected(bridge);
+			}
+		}
 	}
 
 	@Override
@@ -228,7 +241,7 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 		}
 
 		TerminalBridge bridge = new TerminalBridge(this, host);
-		bridge.setOnDisconnectedListener(this);
+		bridge.setOnBridgeConnectionListener(this);
 		bridge.startConnection();
 
 		synchronized (bridges) {
@@ -326,7 +339,7 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 	/**
 	 * Called by child bridge when somehow it's been disconnected.
 	 */
-	public void onDisconnected(TerminalBridge bridge) {
+	public void onBridgeDisconnected(TerminalBridge bridge) {
 		boolean shouldHideRunningNotification = false;
 
 		synchronized (bridges) {
@@ -354,9 +367,21 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 			ConnectionNotifier.getInstance().hideRunningNotification(this);
 		}
 
-		// pass notification back up to gui
-		if (disconnectHandler != null)
-			Message.obtain(disconnectHandler, -1, bridge).sendToTarget();
+		synchronized (mLock) {
+			final Iterator<OnBridgeConnectionListener> i = mConnectionListeners.iterator();
+			while (i.hasNext()) {
+				final OnBridgeConnectionListener listener = i.next();
+				listener.onBridgeDisconnected(bridge);
+			}
+		}
+	}
+
+	public void addOnBridgeConnectionListener(OnBridgeConnectionListener listener) {
+		mConnectionListeners.add(listener);
+	}
+
+	public void removeOnBridgeConnectionListener(OnBridgeConnectionListener listener) {
+		mConnectionListeners.remove(listener);
 	}
 
 	public boolean isKeyLoaded(String nickname) {

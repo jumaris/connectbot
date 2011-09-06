@@ -122,7 +122,7 @@ public class TerminalBridge implements VDUDisplay {
 
 	public PromptHelper promptHelper;
 
-	protected BridgeDisconnectedListener disconnectListener = null;
+	protected OnBridgeConnectionListener mConnectionListener = null;
 
 	/**
 	 * Create a new terminal bridge suitable for unit testing.
@@ -363,6 +363,7 @@ public class TerminalBridge implements VDUDisplay {
 	public void onConnected() {
 		disconnected = false;
 
+		mConnectionListener.onBridgeConnected(this);
 		((vt320) buffer).reset();
 
 		// We no longer need our local output.
@@ -400,8 +401,8 @@ public class TerminalBridge implements VDUDisplay {
 		return false;
 	}
 
-	public void setOnDisconnectedListener(BridgeDisconnectedListener disconnectListener) {
-		this.disconnectListener = disconnectListener;
+	public void setOnBridgeConnectionListener(OnBridgeConnectionListener connectionListener) {
+		mConnectionListener = connectionListener;
 	}
 
 	/**
@@ -432,8 +433,8 @@ public class TerminalBridge implements VDUDisplay {
 
 		if (immediate) {
 			awaitingClose = true;
-			if (disconnectListener != null)
-				disconnectListener.onDisconnected(TerminalBridge.this);
+			if (mConnectionListener != null)
+				mConnectionListener.onBridgeDisconnected(TerminalBridge.this);
 		} else {
 			{
 				final String line = manager.res.getString(R.string.alert_disconnect_msg);
@@ -451,8 +452,8 @@ public class TerminalBridge implements VDUDisplay {
 						awaitingClose = true;
 
 						// Tell the TerminalManager that we can be destroyed now.
-						if (disconnectListener != null)
-							disconnectListener.onDisconnected(TerminalBridge.this);
+						if (mConnectionListener != null)
+							mConnectionListener.onBridgeDisconnected(TerminalBridge.this);
 					}
 				}
 			});
