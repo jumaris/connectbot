@@ -19,6 +19,7 @@ package org.connectbot.service;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -935,51 +936,60 @@ public class TerminalBridge implements VDUDisplay {
 		color = manager.hostdb.getColorsForScheme(HostDatabase.DEFAULT_COLOR_SCHEME);
 	}
 
-	private static Pattern urlPattern = null;
+	// based on http://www.ietf.org/rfc/rfc2396.txt
+	private static final String URL_SCHEME = "[A-Za-z][-+.0-9A-Za-z]*";
+	private static final String URL_UNRESERVED = "[-._~0-9A-Za-z]";
+	private static final String URL_PCT_ENCODED = "%[0-9A-Fa-f]{2}";
+	private static final String URL_SUB_DELIMS = "[!$&'()*+,;:=]";
+	private static final String URL_USERINFO = "(?:" + URL_UNRESERVED + "|" + URL_PCT_ENCODED + "|"
+			+ URL_SUB_DELIMS + "|:)*";
+	private static final String URL_H16 = "[0-9A-Fa-f]{1,4}";
+	private static final String URL_DEC_OCTET = "(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])";
+	private static final String URL_IPV4_ADDRESS = URL_DEC_OCTET + "\\." + URL_DEC_OCTET + "\\."
+			+ URL_DEC_OCTET + "\\." + URL_DEC_OCTET;
+	private static final String URL_LS32 = "(?:" + URL_H16 + ":" + URL_H16 + "|" + URL_IPV4_ADDRESS
+			+ ")";
+	private static final String URL_IPV6_ADDRESS = "(?:(?:" + URL_H16 + "){6}" + URL_LS32 + ")";
+	private static final String URL_IPV_FUTURE = "v[0-9A-Fa-f]+.(?:" + URL_UNRESERVED + "|"
+			+ URL_SUB_DELIMS + "|:)+";
+	private static final String URL_IP_LITERAL = "\\[(?:" + URL_IPV6_ADDRESS + "|" + URL_IPV_FUTURE
+			+ ")\\]";
+	private static final String URL_REG_NAME = "(?:" + URL_UNRESERVED + "|" + URL_PCT_ENCODED + "|"
+			+ URL_SUB_DELIMS + ")*";
+	private static final String URL_HOST = "(?:" + URL_IP_LITERAL + "|" + URL_IPV4_ADDRESS + "|"
+			+ URL_REG_NAME + ")";
+	private static final String URL_PORT = "[0-9]*";
+	private static final String URL_AUTHORITY = "(?:" + URL_USERINFO + "@)?" + URL_HOST + "(?::"
+			+ URL_PORT + ")?";
+	private static final String URL_PCHAR = "(?:" + URL_UNRESERVED + "|" + URL_PCT_ENCODED + "|"
+			+ URL_SUB_DELIMS + "|@)";
+	private static final String URL_SEGMENT = URL_PCHAR + "*";
+	private static final String URL_PATH_ABEMPTY = "(?:/" + URL_SEGMENT + ")*";
+	private static final String URL_SEGMENT_NZ = URL_PCHAR + "+";
+	private static final String URL_PATH_ABSOLUTE = "/(?:" + URL_SEGMENT_NZ + "(?:/" + URL_SEGMENT
+			+ ")*)?";
+	private static final String URL_PATH_ROOTLESS = URL_SEGMENT_NZ + "(?:/" + URL_SEGMENT + ")*";
+	private static final String URL_HIER_PART = "(?://" + URL_AUTHORITY + URL_PATH_ABEMPTY + "|"
+			+ URL_PATH_ABSOLUTE + "|" + URL_PATH_ROOTLESS + ")";
+	private static final String URL_QUERY = "(?:" + URL_PCHAR + "|/|\\?)*";
+	private static final String URL_FRAGMENT = "(?:" + URL_PCHAR + "|/|\\?)*";
+	private static final String URI_REGEX = URL_SCHEME + ":" + URL_HIER_PART + "(?:" + URL_QUERY
+			+ ")?(?:#" + URL_FRAGMENT + ")?";
+
+	private static final Pattern URL_PATTERN = Pattern.compile(URI_REGEX);
 
 	/**
 	 * @return
 	 */
 	public List<String> scanForURLs() {
-		List<String> urls = new LinkedList<String>();
+		final List<String> urls = new ArrayList<String>();
 
-		if (urlPattern == null) {
-			// based on http://www.ietf.org/rfc/rfc2396.txt
-			String scheme = "[A-Za-z][-+.0-9A-Za-z]*";
-			String unreserved = "[-._~0-9A-Za-z]";
-			String pctEncoded = "%[0-9A-Fa-f]{2}";
-			String subDelims = "[!$&'()*+,;:=]";
-			String userinfo = "(?:" + unreserved + "|" + pctEncoded + "|" + subDelims + "|:)*";
-			String h16 = "[0-9A-Fa-f]{1,4}";
-			String decOctet = "(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])";
-			String ipv4address = decOctet + "\\." + decOctet + "\\." + decOctet + "\\." + decOctet;
-			String ls32 = "(?:" + h16 + ":" + h16 + "|" + ipv4address + ")";
-			String ipv6address = "(?:(?:" + h16 + "){6}" + ls32 + ")";
-			String ipvfuture = "v[0-9A-Fa-f]+.(?:" + unreserved + "|" + subDelims + "|:)+";
-			String ipLiteral = "\\[(?:" + ipv6address + "|" + ipvfuture + ")\\]";
-			String regName = "(?:" + unreserved + "|" + pctEncoded + "|" + subDelims + ")*";
-			String host = "(?:" + ipLiteral + "|" + ipv4address + "|" + regName + ")";
-			String port = "[0-9]*";
-			String authority = "(?:" + userinfo + "@)?" + host + "(?::" + port + ")?";
-			String pchar = "(?:" + unreserved + "|" + pctEncoded + "|" + subDelims + "|@)";
-			String segment = pchar + "*";
-			String pathAbempty = "(?:/" + segment + ")*";
-			String segmentNz = pchar + "+";
-			String pathAbsolute = "/(?:" + segmentNz + "(?:/" + segment + ")*)?";
-			String pathRootless = segmentNz + "(?:/" + segment + ")*";
-			String hierPart = "(?://" + authority + pathAbempty + "|" + pathAbsolute + "|" + pathRootless + ")";
-			String query = "(?:" + pchar + "|/|\\?)*";
-			String fragment = "(?:" + pchar + "|/|\\?)*";
-			String uriRegex = scheme + ":" + hierPart + "(?:" + query + ")?(?:#" + fragment + ")?";
-			urlPattern = Pattern.compile(uriRegex);
-		}
-
-		char[] visibleBuffer = new char[buffer.height * buffer.width];
+		final char[] visibleBuffer = new char[buffer.height * buffer.width];
 		for (int l = 0; l < buffer.height; l++)
 			System.arraycopy(buffer.charArray[buffer.windowBase + l], 0,
 					visibleBuffer, l * buffer.width, buffer.width);
 
-		Matcher urlMatcher = urlPattern.matcher(new String(visibleBuffer));
+		final Matcher urlMatcher = URL_PATTERN.matcher(new String(visibleBuffer));
 		while (urlMatcher.find())
 			urls.add(urlMatcher.group());
 
