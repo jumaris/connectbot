@@ -18,7 +18,6 @@
 package org.connectbot;
 
 import org.connectbot.service.TerminalManager;
-import org.connectbot.util.HostDatabase;
 import org.connectbot.util.UpdateHelper;
 
 import android.content.ComponentName;
@@ -38,8 +37,6 @@ public class HostListActivity extends FragmentActivity implements
 	protected TerminalManager mManager = null;
 
 	HostListFragment mFragmentHostList;
-
-	HostDatabase mHostDb;
 
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
