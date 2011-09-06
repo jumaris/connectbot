@@ -654,8 +654,8 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 		}
 	}
 
-	public Integer[] getColorsForScheme(int scheme) {
-		Integer[] colors = Colors.defaults.clone();
+	public int[] getColorsForScheme(int scheme) {
+		int[] colors = Colors.defaults.clone();
 
 		synchronized (dbLock) {
 			SQLiteDatabase db = getReadableDatabase();
@@ -667,7 +667,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 					null, null, null);
 
 			while (c.moveToNext()) {
-				colors[c.getInt(0)] = new Integer(c.getInt(1));
+				colors[c.getInt(0)] = c.getInt(1);
 			}
 
 			c.close();

@@ -65,7 +65,7 @@ public class TerminalBridge implements VDUDisplay {
 	public final static int DEFAULT_FONT_SIZE = 10;
 	private final static int FONT_SIZE_STEP = 2;
 
-	public Integer[] color;
+	public int[] color;
 
 	public int defaultFg = HostDatabase.DEFAULT_FG_COLOR;
 	public int defaultBg = HostDatabase.DEFAULT_BG_COLOR;
