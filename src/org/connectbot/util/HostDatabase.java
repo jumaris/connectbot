@@ -18,6 +18,7 @@
 package org.connectbot.util;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,6 +31,7 @@ import org.connectbot.bean.PortForwardBean;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.util.Log;
@@ -336,15 +338,15 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 	 * @param sortColors If true, sort by color, otherwise sort by nickname.
 	 */
 	public List<HostBean> getHosts(boolean sortColors) {
-		String sortField = sortColors ? FIELD_HOST_COLOR : FIELD_HOST_NICKNAME;
-		List<HostBean> hosts;
+		final String sortField = sortColors ? FIELD_HOST_COLOR : FIELD_HOST_NICKNAME;
+		final List<HostBean> hosts;
 
 		synchronized (dbLock) {
 			SQLiteDatabase db = this.getReadableDatabase();
 
 			Cursor c = db.query(TABLE_HOSTS, null, null, null, null, null, sortField + " ASC");
 
-			hosts = createHostBeans(c);
+			hosts = createHostBeans(c, c.getCount());
 
 			c.close();
 		}
@@ -356,8 +358,8 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 	 * @param hosts
 	 * @param c
 	 */
-	private List<HostBean> createHostBeans(Cursor c) {
-		List<HostBean> hosts = new LinkedList<HostBean>();
+	private List<HostBean> createHostBeans(Cursor c, int count) {
+		final List<HostBean> hosts = new ArrayList<HostBean>(count + 1);
 
 		final int COL_ID = c.getColumnIndexOrThrow("_id"),
 			COL_NICKNAME = c.getColumnIndexOrThrow(FIELD_HOST_NICKNAME),
@@ -378,9 +380,9 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 			COL_ENCODING = c.getColumnIndexOrThrow(FIELD_HOST_ENCODING),
 			COL_STAYCONNECTED = c.getColumnIndexOrThrow(FIELD_HOST_STAYCONNECTED);
 
-
-		while (c.moveToNext()) {
-			HostBean host = new HostBean();
+		int hostNum = 0;
+		while (c.moveToNext() && hostNum++ < count) {
+			final HostBean host = new HostBean();
 
 			host.setId(c.getLong(COL_ID));
 			host.setNickname(c.getString(COL_NICKNAME));
@@ -408,15 +410,21 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 	}
 
 	/**
-	 * @param c
-	 * @return
+	 * Returns the first host bean from a Cursor. Note that the cursor is closed
+	 * after this operation and should not be used after calling this.
+	 *
+	 * @param c cursor containing hosts
+	 * @return first HostBean in the cursor or {@code null} if there were no hosts
 	 */
 	private HostBean getFirstHostBean(Cursor c) {
-		HostBean host = null;
+		final List<HostBean> hosts = createHostBeans(c, 1);
 
-		List<HostBean> hosts = createHostBeans(c);
-		if (hosts.size() > 0)
+		final HostBean host;
+		if (hosts.size() > 0) {
 			host = hosts.get(0);
+		} else {
+			host = null;
+		}
 
 		c.close();
 
@@ -424,21 +432,21 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 	}
 
 	/**
-	 * @param nickname
-	 * @param protocol
-	 * @param username
-	 * @param hostname
-	 * @param hostname2
-	 * @param port
-	 * @return
+	 * Given the attributes of a host, find the corresponding database entry for
+	 * it.
+	 *
+	 * @param selection
+	 *            map of attribute keys to values
+	 * @return {@link HostBean} matching the parameters or {@code null} if it
+	 *         does not exist in the database.
 	 */
-	public HostBean findHost(Map<String, String> selection) {
-		StringBuilder selectionBuilder = new StringBuilder();
+	public HostBean findHost(Map<String, String> selection) throws SQLException {
+		final StringBuilder selectionBuilder = new StringBuilder();
 
-		Iterator<Entry<String, String>> i = selection.entrySet().iterator();
+		final List<String> selectionValuesList = new ArrayList<String>(selection.size() + 1);
 
-		List<String> selectionValuesList = new LinkedList<String>();
 		int n = 0;
+		final Iterator<Entry<String, String>> i = selection.entrySet().iterator();
 		while (i.hasNext()) {
 			Entry<String, String> entry = i.next();
 
@@ -454,44 +462,39 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 			selectionValuesList.add(entry.getValue());
 		}
 
-		String selectionValues[] = new String[selectionValuesList.size()];
-		selectionValuesList.toArray(selectionValues);
-		selectionValuesList = null;
-
-		HostBean host;
+		final String selectionValues[] = selectionValuesList.toArray(
+				new String[selectionValuesList.size()]);
 
 		synchronized (dbLock) {
-			SQLiteDatabase db = getReadableDatabase();
+			final SQLiteDatabase db = getReadableDatabase();
 
-			Cursor c = db.query(TABLE_HOSTS, null,
+			final Cursor c = db.query(TABLE_HOSTS, null,
 					selectionBuilder.toString(),
 					selectionValues,
 					null, null, null);
 
-			host = getFirstHostBean(c);
+			return getFirstHostBean(c);
 		}
-
-		return host;
 	}
 
 	/**
+	 * Find a host by its database primary key id.
+	 *
 	 * @param hostId
-	 * @return
+	 *            database primary key ID for the desired host
+	 * @return {@link HostBean} to the corresponding host or {@code null} if it
+	 *         doesn't exist.
 	 */
 	public HostBean findHostById(long hostId) {
-		HostBean host;
-
 		synchronized (dbLock) {
-			SQLiteDatabase db = getReadableDatabase();
+			final SQLiteDatabase db = getReadableDatabase();
 
-			Cursor c = db.query(TABLE_HOSTS, null,
+			final Cursor c = db.query(TABLE_HOSTS, null,
 					"_id = ?", new String[] { String.valueOf(hostId) },
 					null, null, null);
 
-			host = getFirstHostBean(c);
+			return getFirstHostBean(c);
 		}
-
-		return host;
 	}
 
 	/**
@@ -518,41 +521,45 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 
 	/**
 	 * Build list of known hosts for Trilead library.
-	 * @return
+	 * @return {@code KnownHosts} object that contains all hosts in the database.
 	 */
 	public KnownHosts getKnownHosts() {
-		KnownHosts known = new KnownHosts();
+		final KnownHosts known = new KnownHosts();
 
 		synchronized (dbLock) {
-			SQLiteDatabase db = this.getReadableDatabase();
-			Cursor c = db.query(TABLE_HOSTS, new String[] { FIELD_HOST_HOSTNAME,
+			final SQLiteDatabase db = this.getReadableDatabase();
+			final Cursor c = db.query(TABLE_HOSTS, new String[] { FIELD_HOST_HOSTNAME,
 					FIELD_HOST_PORT, FIELD_HOST_HOSTKEYALGO, FIELD_HOST_HOSTKEY },
 					null, null, null, null, null);
 
-			if (c != null) {
-				int COL_HOSTNAME = c.getColumnIndexOrThrow(FIELD_HOST_HOSTNAME),
+			final int COL_HOSTNAME = c.getColumnIndexOrThrow(FIELD_HOST_HOSTNAME),
 					COL_PORT = c.getColumnIndexOrThrow(FIELD_HOST_PORT),
 					COL_HOSTKEYALGO = c.getColumnIndexOrThrow(FIELD_HOST_HOSTKEYALGO),
 					COL_HOSTKEY = c.getColumnIndexOrThrow(FIELD_HOST_HOSTKEY);
 
-				while (c.moveToNext()) {
-					String hostname = c.getString(COL_HOSTNAME),
-						hostkeyalgo = c.getString(COL_HOSTKEYALGO);
-					int port = c.getInt(COL_PORT);
-					byte[] hostkey = c.getBlob(COL_HOSTKEY);
-
-					if (hostkeyalgo == null || hostkeyalgo.length() == 0) continue;
-					if (hostkey == null || hostkey.length == 0) continue;
-
-					try {
-						known.addHostkey(new String[] { String.format("%s:%d", hostname, port) }, hostkeyalgo, hostkey);
-					} catch(Exception e) {
-						Log.e(TAG, "Problem while adding a known host from database", e);
-					}
+			while (c.moveToNext()) {
+				final String hostkeyalgo = c.getString(COL_HOSTKEYALGO);
+				if (hostkeyalgo == null || hostkeyalgo.length() == 0) {
+					continue;
 				}
 
-				c.close();
+				final byte[] hostkey = c.getBlob(COL_HOSTKEY);
+				if (hostkey == null || hostkey.length == 0) {
+					continue;
+				}
+
+				final String hostname = c.getString(COL_HOSTNAME);
+				final int port = c.getInt(COL_PORT);
+
+				try {
+					final String[] hostnames = new String[] { hostname + ":" + port };
+					known.addHostkey(hostnames, hostkeyalgo, hostkey);
+				} catch (Exception e) {
+					Log.e(TAG, "Problem while adding a known host from database", e);
+				}
 			}
+
+			c.close();
 		}
 
 		return known;
@@ -563,13 +570,15 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 	 * @param pubkeyId
 	 */
 	public void stopUsingPubkey(long pubkeyId) {
-		if (pubkeyId < 0) return;
+		if (pubkeyId < 0) {
+			return;
+		}
 
-		ContentValues values = new ContentValues();
+		final ContentValues values = new ContentValues();
 		values.put(FIELD_HOST_PUBKEYID, PUBKEYID_ANY);
 
 		synchronized (dbLock) {
-			SQLiteDatabase db = this.getWritableDatabase();
+			final SQLiteDatabase db = this.getWritableDatabase();
 
 			db.update(TABLE_HOSTS, values, FIELD_HOST_PUBKEYID + " = ?", new String[] { String.valueOf(pubkeyId) });
 		}
@@ -590,9 +599,9 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 		List<PortForwardBean> portForwards = new LinkedList<PortForwardBean>();
 
 		synchronized (dbLock) {
-			SQLiteDatabase db = this.getReadableDatabase();
+			final SQLiteDatabase db = this.getReadableDatabase();
 
-			Cursor c = db.query(TABLE_PORTFORWARDS, new String[] {
+			final Cursor c = db.query(TABLE_PORTFORWARDS, new String[] {
 					"_id", FIELD_PORTFORWARD_NICKNAME, FIELD_PORTFORWARD_TYPE, FIELD_PORTFORWARD_SOURCEPORT,
 					FIELD_PORTFORWARD_DESTADDR, FIELD_PORTFORWARD_DESTPORT },
 					FIELD_PORTFORWARD_HOSTID + " = ?", new String[] { String.valueOf(host.getId()) },
@@ -625,10 +634,10 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 		boolean success = false;
 
 		synchronized (dbLock) {
-			SQLiteDatabase db = getWritableDatabase();
+			final SQLiteDatabase db = getWritableDatabase();
 
 			if (pfb.getId() < 0) {
-				long id = db.insert(TABLE_PORTFORWARDS, null, pfb.getValues());
+				final long id = db.insert(TABLE_PORTFORWARDS, null, pfb.getValues());
 				pfb.setId(id);
 				success = true;
 			} else {
@@ -649,18 +658,18 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 			return;
 
 		synchronized (dbLock) {
-			SQLiteDatabase db = this.getWritableDatabase();
+			final SQLiteDatabase db = this.getWritableDatabase();
 			db.delete(TABLE_PORTFORWARDS, "_id = ?", new String[] { String.valueOf(pfb.getId()) });
 		}
 	}
 
 	public int[] getColorsForScheme(int scheme) {
-		int[] colors = Colors.defaults.clone();
+		final int[] colors = Colors.defaults.clone();
 
 		synchronized (dbLock) {
-			SQLiteDatabase db = getReadableDatabase();
+			final SQLiteDatabase db = getReadableDatabase();
 
-			Cursor c = db.query(TABLE_COLORS, new String[] {
+			final Cursor c = db.query(TABLE_COLORS, new String[] {
 					FIELD_COLOR_NUMBER, FIELD_COLOR_VALUE },
 					FIELD_COLOR_SCHEME + " = ?",
 					new String[] { String.valueOf(scheme) },
@@ -677,13 +686,11 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 	}
 
 	public void setColorForScheme(int scheme, int number, int value) {
-		final SQLiteDatabase db;
-
 		final String[] whereArgs = new String[] { String.valueOf(scheme), String.valueOf(number) };
 
 		if (value == Colors.defaults[number]) {
 			synchronized (dbLock) {
-				db = getWritableDatabase();
+				final SQLiteDatabase db = getWritableDatabase();
 
 				db.delete(TABLE_COLORS,
 						WHERE_SCHEME_AND_COLOR, whereArgs);
@@ -693,7 +700,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 			values.put(FIELD_COLOR_VALUE, value);
 
 			synchronized (dbLock) {
-				db = getWritableDatabase();
+				final SQLiteDatabase db = getWritableDatabase();
 
 				final int rowsAffected = db.update(TABLE_COLORS, values,
 						WHERE_SCHEME_AND_COLOR, whereArgs);
@@ -712,12 +719,12 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 	}
 
 	public int[] getDefaultColorsForScheme(int scheme) {
-		int[] colors = new int[] { DEFAULT_FG_COLOR, DEFAULT_BG_COLOR };
+		final int[] colors = new int[] { DEFAULT_FG_COLOR, DEFAULT_BG_COLOR };
 
 		synchronized (dbLock) {
-			SQLiteDatabase db = getReadableDatabase();
+			final SQLiteDatabase db = getReadableDatabase();
 
-			Cursor c = db.query(TABLE_COLOR_DEFAULTS,
+			final Cursor c = db.query(TABLE_COLOR_DEFAULTS,
 					new String[] { FIELD_COLOR_FG, FIELD_COLOR_BG },
 					FIELD_COLOR_SCHEME + " = ?",
 					new String[] { String.valueOf(scheme) },
