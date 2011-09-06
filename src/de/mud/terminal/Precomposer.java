@@ -1036,7 +1036,7 @@ public class Precomposer {
 		long that;
 
 		while (max >= min) {
-			mid = (min + max) / 2;
+			mid = (min + max) >>> 1;
 			that = precompositions[mid][1] << UNICODE_SHIFT | precompositions[mid][2];
 			if (that < sought)
 				min = mid + 1;
