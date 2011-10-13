@@ -22,7 +22,6 @@
 	<item
 		android:id="@+id/disconnect"
 		android:title="@string/list_host_disconnect"
-		android:alphabeticShortcut="w"
 		android:showAsAction="always|withText"
 		android:icon="@android:drawable/ic_menu_close_clear_cancel"
 		android:enabled="false"
@@ -30,7 +29,6 @@
 	<item
 		android:id="@+id/copy"
 		android:title="@string/console_menu_copy"
-		android:alphabeticShortcut="c"
 		android:icon="@android:drawable/ic_menu_set_as"
 		android:showAsAction="withText"
 		android:enabled="false"
@@ -38,7 +36,6 @@
 	<item
 		android:id="@+id/paste"
 		android:title="@string/console_menu_paste"
-		android:alphabeticShortcut="v"
 		android:showAsAction="withText"
 		android:icon="@android:drawable/ic_menu_edit"
 		android:enabled="false"
@@ -46,7 +43,6 @@
 	<item
 		android:id="@+id/port_forwards"
 		android:title="@string/console_menu_portforwards"
-		android:alphabeticShortcut="f"
 		android:showAsAction="withText"
 		android:icon="@android:drawable/ic_menu_manage"
 		android:enabled="false"
@@ -54,7 +50,6 @@
 	<item
 		android:id="@+id/url_scan"
 		android:title="@string/console_menu_urlscan"
-		android:alphabeticShortcut="u"
 		android:showAsAction="withText"
 		android:icon="@android:drawable/ic_menu_search"
 		android:enabled="false"
@@ -62,7 +57,6 @@
 	<item
 		android:id="@+id/resize"
 		android:title="@string/console_menu_resize"
-		android:alphabeticShortcut="s"
 		android:showAsAction="withText"
 		android:icon="@android:drawable/ic_menu_crop"
 		android:enabled="false"
