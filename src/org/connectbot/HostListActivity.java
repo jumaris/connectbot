@@ -18,7 +18,6 @@
 package org.connectbot;
 
 import org.connectbot.service.TerminalManager;
-import org.connectbot.util.UpdateHelper;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -29,8 +28,6 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
-
-import com.nullwire.trace.ExceptionHandler;
 
 public class HostListActivity extends FragmentActivity implements
 		HostListFragment.HostListFragmentContainer {
@@ -70,8 +67,6 @@ public class HostListActivity extends FragmentActivity implements
 	@Override
 	public void onResume() {
 		super.onResume();
-
-		ExceptionHandler.checkForTraces(this);
 	}
 
 	@Override
@@ -92,11 +87,6 @@ public class HostListActivity extends FragmentActivity implements
 
 		this.setTitle(String.format("%s: %s", getResources().getText(R.string.app_name),
 				getResources().getText(R.string.title_hosts_list)));
-
-		ExceptionHandler.register(this);
-
-		// start thread to check for new version
-		new UpdateHelper(this);
 
 		mFragmentHostList = HostListFragment.newInstance();
 

@@ -39,8 +39,6 @@ import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
 
-import com.nullwire.trace.ExceptionHandler;
-
 public class ConsoleActivity extends FragmentActivity implements ConsoleFragment.ConsoleFragmentContainer, HostListFragment.HostListFragmentContainer, OnBridgeConnectionListener {
 	public final static String TAG = "ConnectBot.ConsoleActivity";
 
@@ -118,8 +116,6 @@ public class ConsoleActivity extends FragmentActivity implements ConsoleFragment
 				Configuration.KEYBOARD_QWERTY;
 
 		this.setContentView(R.layout.act_console);
-
-		ExceptionHandler.register(this);
 
 		fragmentConsole = ConsoleFragment.newInstance();
 
