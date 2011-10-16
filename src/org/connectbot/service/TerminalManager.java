@@ -140,7 +140,7 @@ public class TerminalManager extends Service implements OnBridgeConnectionListen
 		for (PubkeyBean pubkey : pubkeys) {
 			try {
 				PrivateKey privKey = PubkeyUtils.decodePrivate(pubkey.getPrivateKey(), pubkey.getType());
-				PublicKey pubKey = PubkeyUtils.decodePublic(pubkey.getPublicKey(), pubkey.getType());
+				PublicKey pubKey = pubkey.getPublicKey();
 				Object trileadKey = PubkeyUtils.convertToTrilead(privKey, pubKey);
 
 				addKey(pubkey, trileadKey);

@@ -280,7 +280,7 @@ public class PubkeyListActivity extends ListActivity implements EventListener {
 			PublicKey pubKey = null;
 			try {
 				privKey = PubkeyUtils.decodePrivate(pubkey.getPrivateKey(), pubkey.getType(), password);
-				pubKey = PubkeyUtils.decodePublic(pubkey.getPublicKey(), pubkey.getType());
+				pubKey = pubkey.getPublicKey();
 			} catch (Exception e) {
 				String message = getResources().getString(R.string.pubkey_failed_add, pubkey.getNickname());
 				Log.e(TAG, message, e);
@@ -351,7 +351,7 @@ public class PubkeyListActivity extends ListActivity implements EventListener {
 		copyPublicToClipboard.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			public boolean onMenuItemClick(MenuItem item) {
 				try {
-					PublicKey pk = PubkeyUtils.decodePublic(pubkey.getPublicKey(), pubkey.getType());
+					PublicKey pk = pubkey.getPublicKey();
 					String openSSHPubkey = PubkeyUtils.convertToOpenSSHFormat(pk, pubkey.getNickname());
 
 					clipboard.setText(openSSHPubkey);
@@ -666,8 +666,7 @@ public class PubkeyListActivity extends ListActivity implements EventListener {
 				}
 			} else {
 				try {
-					PublicKey pub = PubkeyUtils.decodePublic(pubkey.getPublicKey(), pubkey.getType());
-					holder.caption.setText(PubkeyUtils.describeKey(pub, pubkey.isEncrypted()));
+					holder.caption.setText(pubkey.getDescription());
 				} catch (Exception e) {
 					Log.e(TAG, "Error decoding public key at " + pubkey.getId(), e);
 					holder.caption.setText(R.string.pubkey_unknown_format);
