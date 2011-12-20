@@ -18,7 +18,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	package="org.connectbot"
 	android:versionName="1.7.1"
-	android:versionCode="359"
+	android:versionCode="400"
 	android:installLocation="auto">
 
 	<uses-sdk android:targetSdkVersion="11" android:minSdkVersion="4" />
@@ -28,6 +28,8 @@
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
+
+	<uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
 
 	<supports-screens />
 
