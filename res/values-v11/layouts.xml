@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<resources>
+	<item name="act_hostlist" type="layout">@layout/act_hostlist_onepane</item>
+</resources>

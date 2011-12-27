@@ -29,141 +29,64 @@ import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
-import android.view.Surface;
-import android.view.View;
-import android.view.WindowManager;
 
-public class ConsoleActivity extends FragmentActivity implements ConsoleFragment.ConsoleFragmentContainer, HostListFragment.HostListFragmentContainer, OnBridgeConnectionListener {
+public class ConsoleActivity extends CBFragmentActivity implements ConsoleFragment.ConsoleFragmentContainer, OnBridgeConnectionListener {
 	public final static String TAG = "ConnectBot.ConsoleActivity";
 
-	protected TerminalManager bound = null;
-
-	// determines whether or not menuitem accelerators are bound
-	// otherwise they collide with an external keyboard's CTRL-char
-	private boolean hardKeyboard = false;
+	protected TerminalManager mManager = null;
 
 	protected Uri requested;
 
-	ConsoleFragment fragmentConsole;
-	HostListFragment fragmentHostList;
-
-	private static final int MSG_INVALIDATE_MENU = 1;
-
-	private static final int MSG_CLOSE_BRIDGE = 2;
-
-	private Handler mUiHandler = new Handler() {
-		@Override
-		public void handleMessage(Message msg) {
-			switch (msg.what) {
-			case MSG_INVALIDATE_MENU:
-				invalidateOptionsMenu();
-				break;
-			case MSG_CLOSE_BRIDGE:
-				final TerminalBridge bridge = (TerminalBridge) msg.obj;
-				if (bridge.isAwaitingClose()) {
-					fragmentConsole.removeBridgeView(bridge);
-				}
-				break;
-			}
-		}
-	};
+	ConsoleFragment mFragmentConsole;
 
 	private ServiceConnection connection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
-			bound = ((TerminalManager.TerminalBinder) service).getService();
+			mManager = ((TerminalManager.TerminalBinder) service).getService();
 
 			// let manager know about our event handling services
-			bound.addOnBridgeConnectionListener(ConsoleActivity.this);
+			mManager.addOnBridgeConnectionListener(ConsoleActivity.this);
 
-			Log.d(TAG, String.format("Connected to TerminalManager and found bridges.size=%d", bound.bridges.size()));
+			Log.d(TAG, String.format("Connected to TerminalManager and found bridges.size=%d", mManager.bridges.size()));
 
-			bound.setResizeAllowed(true);
+			mManager.setResizeAllowed(true);
 
-			fragmentConsole.setupConsoles();
-
-			// update our listview binder to find the service
-			if (fragmentHostList != null) fragmentHostList.updateList();
+			mFragmentConsole.setupConsoles();
 		}
 
 		public void onServiceDisconnected(ComponentName className) {
 			// tell each bridge to forget about our prompt handler
-			synchronized (bound.bridges) {
-				for (TerminalBridge bridge : bound.bridges)
+			synchronized (mManager.bridges) {
+				for (TerminalBridge bridge : mManager.bridges)
 					bridge.promptHelper.setHandler(null);
 			}
 
-			bound.removeOnBridgeConnectionListener(ConsoleActivity.this);
-			fragmentConsole.destroyConsoles();
+			mManager.removeOnBridgeConnectionListener(ConsoleActivity.this);
+			mFragmentConsole.destroyConsoles();
 
-			if (fragmentHostList != null) {
-				fragmentHostList.updateList();
-			}
-
-			bound = null;
+			mManager = null;
 		}
 	};
 
 	@Override
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
-		hardKeyboard = getResources().getConfiguration().keyboard ==
-				Configuration.KEYBOARD_QWERTY;
 
-		this.setContentView(R.layout.act_console);
-
-		fragmentConsole = ConsoleFragment.newInstance();
-
-		FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-		ft.replace(R.id.consoleFrame, fragmentConsole);
-		if (findViewById(R.id.listFrame) != null) {
-			fragmentHostList = HostListFragment.newInstance();
-			ft.replace(R.id.listFrame, fragmentHostList);
+		// If should be in two-pane mode, finish to return to host list activity
+		if (getResources().getBoolean(R.bool.has_two_panes)) {
+			finish();
+			return;
 		}
-		ft.commit();
-	}
 
-	/**
-	 *
-	 */
-	private void configureOrientation() {
-		/*String rotateDefault;
-		if (getResources().getConfiguration().keyboard == Configuration.KEYBOARD_NOKEYS)
-			rotateDefault = PreferenceConstants.ROTATION_PORTRAIT;
-		else
-			rotateDefault = PreferenceConstants.ROTATION_LANDSCAPE;
+		setContentView(R.layout.act_console);
 
-		String rotate = prefs.getString(PreferenceConstants.ROTATION, rotateDefault);
-		if (PreferenceConstants.ROTATION_DEFAULT.equals(rotate))
-			rotate = rotateDefault;
+		mFragmentConsole = (ConsoleFragment) getSupportFragmentManager().findFragmentById(R.id.consoleFragment);
 
-		// request a forced orientation if requested by user
-		if (PreferenceConstants.ROTATION_LANDSCAPE.equals(rotate)) {
-			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-			forcedOrientation = true;
-		} else if (PreferenceConstants.ROTATION_PORTRAIT.equals(rotate)) {
-			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-			forcedOrientation = true;
-		} else {
-			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-			forcedOrientation = false;
-		}*/
+		if (mFragmentConsole == null) {
+			mFragmentConsole = ConsoleFragment.newInstance();
 
-		// Hide Host List fragment in portrait mode
-		int orientation = ((WindowManager) getSystemService(WINDOW_SERVICE)).getDefaultDisplay().getOrientation();
-		Log.d("ConnectBotTablet", "Orientation: "+orientation);
-		final View listFrame = findViewById(R.id.listFrame);
-		if (listFrame != null) {
-			if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180 ) {
-				findViewById(R.id.listFrame).setVisibility(View.VISIBLE);
-			} else {
-				findViewById(R.id.listFrame).setVisibility(View.GONE);
-			}
+			getSupportFragmentManager().beginTransaction().replace(R.id.consoleFragment, mFragmentConsole).commit();
 		}
 	}
 
@@ -186,8 +109,6 @@ public class ConsoleActivity extends FragmentActivity implements ConsoleFragment
 	public void onResume() {
 		super.onResume();
 		Log.d(TAG, "onResume called");
-
-		configureOrientation();
 	}
 
 	/* (non-Javadoc)
@@ -206,12 +127,12 @@ public class ConsoleActivity extends FragmentActivity implements ConsoleFragment
 			return;
 		}
 
-		if (bound == null) {
+		if (mManager == null) {
 			Log.e(TAG, "We're not bound in onNewIntent()");
 			return;
 		}
 
-		fragmentConsole.startConsole(requested);
+		mFragmentConsole.startConsole(requested);
 	}
 
 	@Override
@@ -225,55 +146,26 @@ public class ConsoleActivity extends FragmentActivity implements ConsoleFragment
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
 
-		Log.d(TAG, String.format("onConfigurationChanged; requestedOrientation=%d, newConfig.orientation=%d", getRequestedOrientation(), newConfig.orientation));
-		/*if (bound != null) {
-			if (forcedOrientation &&
-					(newConfig.orientation != Configuration.ORIENTATION_LANDSCAPE &&
-					getRequestedOrientation() == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) ||
-					(newConfig.orientation != Configuration.ORIENTATION_PORTRAIT &&
-					getRequestedOrientation() == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT))
-				bound.setResizeAllowed(false);
-			else
-				bound.setResizeAllowed(true);
-
-			bound.hardKeyboardHidden = (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES);
-
-			mKeyboardButton.setVisibility(bound.hardKeyboardHidden ? View.VISIBLE : View.GONE);
-		}*/
-
-		configureOrientation();
+		Log.d(TAG, String.format(
+				"onConfigurationChanged; requestedOrientation=%d, newConfig.orientation=%d",
+				getRequestedOrientation(), newConfig.orientation));
 	}
 
+	@Override
 	public TerminalManager getTerminalManager() {
-		return bound;
+		return mManager;
 	}
 
+	@Override
 	public void onTerminalViewChanged(HostBean host) {
-		fragmentHostList.updateHandler.sendEmptyMessage(-1);
-		fragmentHostList.setCurrentSelected(host);
-		mUiHandler.sendEmptyMessage(MSG_INVALIDATE_MENU);
-	}
-
-	public boolean startConsoleActivity(Uri uri) {
-		fragmentConsole.startConsole(uri);
-
-		return true;
+		super.onTerminalViewChanged(host);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.connectbot.service.OnBridgeConnectionListener#onBridgeConnected(org.connectbot.service.TerminalBridge)
+	 * @see org.connectbot.CBFragmentActivity#onBridgeViewNeedsRemoval(org.connectbot.service.TerminalBridge)
 	 */
-	public void onBridgeConnected(TerminalBridge bridge) {
-		mUiHandler.sendEmptyMessage(MSG_INVALIDATE_MENU);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.connectbot.service.OnBridgeConnectionListener#onBridgeDisconnected(org.connectbot.service.TerminalBridge)
-	 */
-	public void onBridgeDisconnected(TerminalBridge bridge) {
-		final Message msg = mUiHandler.obtainMessage(MSG_CLOSE_BRIDGE, bridge);
-		mUiHandler.sendMessage(msg);
-
-		mUiHandler.sendEmptyMessage(MSG_INVALIDATE_MENU);
+	@Override
+	protected void onBridgeViewNeedsRemoval(TerminalBridge bridge) {
+		mFragmentConsole.removeBridgeView(bridge);
 	}
 }

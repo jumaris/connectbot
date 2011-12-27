@@ -24,10 +24,13 @@
 	android:background="#ff000000"
 	>
 
-	<FrameLayout
-		android:id="@+id/consoleFrame"
+	<fragment
+		android:id="@+id/consoleFragment"
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"
-	/>
+		class="org.connectbot.ConsoleFragment"
+		>
+		<!-- Preview: layout=@layout/frg_console -->
+	</fragment>
 
 </RelativeLayout>

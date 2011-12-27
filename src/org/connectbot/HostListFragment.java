@@ -24,7 +24,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -66,8 +65,6 @@ public class HostListFragment extends Fragment {
 
 	public interface HostListFragmentContainer {
 		public TerminalManager getTerminalManager();
-
-		public boolean startConsoleActivity(Uri uri);
 	}
 
 	/**
@@ -113,12 +110,6 @@ public class HostListFragment extends Fragment {
 		// check for eula agreement
 		this.prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
-		boolean agreed = prefs.getBoolean(PreferenceConstants.EULA, false);
-		if (!agreed) {
-			this.startActivityForResult(new Intent(getActivity(), WizardActivity.class),
-					REQUEST_EULA);
-		}
-
 		this.makingShortcut = Intent.ACTION_CREATE_SHORTCUT.equals(getActivity().getIntent()
 				.getAction()) || Intent.ACTION_PICK.equals(getActivity().getIntent().getAction());
 
@@ -127,7 +118,7 @@ public class HostListFragment extends Fragment {
 
 		this.sortedByColor = prefs.getBoolean(PreferenceConstants.SORT_BY_COLOR, false);
 
-		Fragment f = getFragmentManager().findFragmentById(R.id.consoleFrame);
+		Fragment f = getFragmentManager().findFragmentById(R.id.consoleFragment);
 		if (f == null)
 			mDualPane = false;
 		else
@@ -173,46 +164,12 @@ public class HostListFragment extends Fragment {
 				}
 			}
 		});
+
 		if (mDualPane) {
 			// In dual-pane mode, the list view highlights the selected item.
 			lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 		}
 		this.registerForContextMenu(lv);
-
-		quickconnect = (TextView) v.findViewById(R.id.front_quickconnect);
-		quickconnect.setVisibility(makingShortcut ? View.GONE : View.VISIBLE);
-		quickconnect.setOnKeyListener(new View.OnKeyListener() {
-
-			public boolean onKey(View v, int keyCode, KeyEvent event) {
-
-				if (event.getAction() == KeyEvent.ACTION_UP)
-					return false;
-				if (keyCode != KeyEvent.KEYCODE_ENTER)
-					return false;
-
-				return startConsoleActivity();
-			}
-		});
-
-		transportSpinner = (Spinner) v.findViewById(R.id.transport_selection);
-		transportSpinner.setVisibility(makingShortcut ? View.GONE : View.VISIBLE);
-		ArrayAdapter<String> transportSelection = new ArrayAdapter<String>(getActivity(),
-				android.R.layout.simple_spinner_item, TransportFactory.getTransportNames());
-		transportSelection.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		transportSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-			public void onItemSelected(AdapterView<?> arg0, View view, int position, long id) {
-				String formatHint = TransportFactory.getFormatHint(
-						(String) transportSpinner.getSelectedItem(), getActivity());
-
-				quickconnect.setHint(formatHint);
-				quickconnect.setError(null);
-				quickconnect.requestFocus();
-			}
-
-			public void onNothingSelected(AdapterView<?> arg0) {
-			}
-		});
-		transportSpinner.setAdapter(transportSelection);
 
 		this.inflater = inflater;
 
@@ -402,7 +359,11 @@ public class HostListFragment extends Fragment {
 	}
 
 	public boolean startConsoleActivity(Uri uri) {
-		return mListener.startConsoleActivity(uri);
+		Intent intent = new Intent(getActivity().getApplicationContext(), ConsoleActivity.class);
+		intent.setData(uri);
+		startActivity(intent);
+
+		return true;
 	}
 
 	public boolean startConsoleActivity() {

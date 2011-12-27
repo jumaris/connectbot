@@ -17,35 +17,68 @@
 
 package org.connectbot;
 
+import org.connectbot.bean.HostBean;
+import org.connectbot.service.TerminalBridge;
 import org.connectbot.service.TerminalManager;
 
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 
-public class HostListActivity extends FragmentActivity implements
-		HostListFragment.HostListFragmentContainer {
+public class HostListActivity extends CBFragmentActivity implements
+		HostListFragment.HostListFragmentContainer, ConsoleFragment.ConsoleFragmentContainer {
+	private static final String TAG = "ConnectBot.HostListActivity";
+
 	protected TerminalManager mManager = null;
 
-	HostListFragment mFragmentHostList;
+	private boolean mIsTwoPane;
+
+	private HostListFragment mFragmentHostList;
+
+	private ConsoleFragment mFragmentConsole;
 
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mManager = ((TerminalManager.TerminalBinder) service).getService();
+
+			// let manager know about our event handling services
+			mManager.addOnBridgeConnectionListener(HostListActivity.this);
+
+			Log.d(TAG, String.format("Connected to TerminalManager and found bridges.size=%d", mManager.bridges.size()));
+
+			if (mIsTwoPane) {
+				mManager.setResizeAllowed(true);
+
+				mFragmentConsole.setupConsoles();
+			}
 
 			// update our listview binder to find the service
 			mFragmentHostList.updateList();
 		}
 
 		public void onServiceDisconnected(ComponentName className) {
-			mManager = null;
+			if (mIsTwoPane) {
+				// tell each bridge to forget about our prompt handler
+				synchronized (mManager.bridges) {
+					for (TerminalBridge bridge : mManager.bridges)
+						bridge.promptHelper.setHandler(null);
+				}
+
+				mManager.removeOnBridgeConnectionListener(HostListActivity.this);
+				mFragmentConsole.destroyConsoles();
+			}
+
 			mFragmentHostList.updateList();
+
+			mManager = null;
 		}
 	};
 
@@ -73,38 +106,72 @@ public class HostListActivity extends FragmentActivity implements
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 
-		// If we are on tablet, skip this activity and move straight to console
-		// activity
-		// TODO: Need a new workaround when new OS are released
-		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
-			Intent i = new Intent(this, ConsoleActivity.class);
-			startActivity(i);
-			finish();
-			return;
-		}
+		mIsTwoPane = getResources().getBoolean(R.bool.has_two_panes);
 
 		setContentView(R.layout.act_hostlist);
 
-		this.setTitle(String.format("%s: %s", getResources().getText(R.string.app_name),
-				getResources().getText(R.string.title_hosts_list)));
+		FragmentTransaction ft = null;
 
-		mFragmentHostList = HostListFragment.newInstance();
+		mFragmentHostList = (HostListFragment) getSupportFragmentManager().findFragmentById(R.id.listFragment);
+		if (mFragmentHostList == null) {
+			ft = getSupportFragmentManager().beginTransaction();
 
-		FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-		ft.replace(R.id.listFrame, mFragmentHostList);
-		// ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-		ft.commit();
+			mFragmentHostList = HostListFragment.newInstance();
+			ft.replace(R.id.listFragment, mFragmentHostList);
+		}
+
+		if (mIsTwoPane) {
+			mFragmentConsole = (ConsoleFragment) getSupportFragmentManager().findFragmentById(
+					R.id.consoleFragment);
+			if (mFragmentConsole == null) {
+				if (ft == null) {
+					ft = getSupportFragmentManager().beginTransaction();
+				}
+
+				mFragmentConsole = ConsoleFragment.newInstance();
+
+				ft.replace(R.id.consoleFragment, mFragmentConsole);
+			}
+		}
+
+		if (ft != null) {
+			ft.commit();
+		}
+
+		final Button buttonAdd = (Button) findViewById(R.id.button_add);
+		if (buttonAdd != null) {
+			buttonAdd.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					// TODO start the "new host editing" activity
+					Log.d(TAG, "Add button pressed");
+				}
+			});
+		}
 	}
 
-	public boolean startConsoleActivity(Uri uri) {
-		Intent intent = new Intent(this, ConsoleActivity.class);
-		intent.setData(uri);
-		startActivity(intent);
-
-		return true;
-	}
-
+	@Override
 	public TerminalManager getTerminalManager() {
 		return mManager;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.connectbot.ConsoleFragment.ConsoleFragmentContainer#onTerminalViewChanged(org.connectbot.bean.HostBean)
+	 */
+	@Override
+	public void onTerminalViewChanged(HostBean host) {
+		super.onTerminalViewChanged(host);
+
+		mFragmentHostList.updateHandler.sendEmptyMessage(-1);
+		mFragmentHostList.setCurrentSelected(host);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.connectbot.CBFragmentActivity#onBridgeViewNeedsRemoval(org.connectbot.service.TerminalBridge)
+	 */
+	@Override
+	protected void onBridgeViewNeedsRemoval(TerminalBridge bridge) {
+		if (mIsTwoPane) {
+			mFragmentConsole.removeBridgeView(bridge);
+		}
 	}
 }

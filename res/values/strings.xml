@@ -362,7 +362,7 @@
 	<string name="list_host_portforwards">"Edit port forwards"</string>
 	<string name="list_host_delete">"Delete host"</string>
 	<!-- Note that the '\n' splits the lines so it's actually "quick-connect box below to connect" -->
-	<string name="list_host_empty">"Use the quick-connect box"\n"below to connect to a host."</string>
+	<string name="list_host_empty">"Use the quick-connect box below to connect to a host."</string>
 
 	<!-- Default screen rotation preference selection -->
 	<string name="list_rotation_default">"Default"</string>
@@ -390,13 +390,6 @@
 	<string name="delete_message">"Are you sure you want to delete '%1$s'?"</string>
 	<string name="delete_pos">"Yes, delete"</string>
 	<string name="delete_neg">"Cancel"</string>
-
-	<!-- Button to agree to license terms. -->
-	<string name="wizard_agree">"Agree"</string>
-	<!-- Button to go to the next page in the first time start-up wizard. -->
-	<string name="wizard_next">"Next"</string>
-	<!-- Button to go to the previous page in the first time start-up wizard. -->
-	<string name="wizard_back">"Back"</string>
 
 	<string name="terminal_no_hosts_connected">"No hosts currently connected"</string>
 
@@ -445,9 +438,6 @@
 	<!-- Preference selection for SSH Authentication Agent to be able to use pubkeys -->
 	<string name="yes">"Yes"</string>
 
-	<!-- String displayed to user when they're asked to submit exceptions to the ConnectBot developers -->
-	<string name="exceptions_submit_message">"It appears ConnectBot had a problem last time it ran.  Submit error report to ConnectBot developers?"</string>
-
 	<!-- Menu selection to reset colors to their defaults. -->
 	<string name="menu_colors_reset">"Reset"</string>
 
@@ -473,13 +463,16 @@
 
 	<!-- Describes the icon of the "send control character" button in the terminal view for
 	     accessibility purposes. -->
-	<string name="image_description_toggle_control_character">Toggle control character.</string>
+	<string name="image_description_toggle_control_character">"Toggle control character."</string>
 
 	<!-- Describes the icon of the "send escape character" button in the terminal view for
 	     accessibility purposes. -->
-	<string name="image_description_send_escape_character">Send escape character.</string>
+	<string name="image_description_send_escape_character">"Send escape character."</string>
 
 	<!-- Describes the icon of the "show keyboard" button in the terminal view for accessibility
 	     purposes. -->
-	<string name="image_description_show_keyboard">Show keyboard.</string>
+	<string name="image_description_show_keyboard">"Show keyboard."</string>
+
+	<!-- String describing action that a button to add a host takes for accessibility purposes. -->
+	<string name="add_host">"Add host"</string>
 </resources>

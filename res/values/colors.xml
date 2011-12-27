@@ -2,7 +2,7 @@
 <!--
 /*
  * ConnectBot: simple, powerful, open-source SSH client for Android
- * Copyright 2007 Kenny Root, Jeffrey Sharkey
+ * Copyright 2011 Kenny Root, Jeffrey Sharkey
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,7 @@
  */
 -->
 <resources>
-	<style name="NoTitle" parent="android:Theme">
-		<item name="android:windowNoTitle">true</item>
-		<item name="android:windowContentOverlay">@null</item>
-	</style>
-
-	<style name="ThemeSelector" parent="android:Theme.NoTitleBar">
-		<item name="android:windowContentOverlay">@null</item>
-	</style>
+	<color name="list_background">#ff000000</color>
+	<color name="list_background_twopanes">#ff333333</color>
+	<color name="header_background">#ff666666</color>
 </resources>

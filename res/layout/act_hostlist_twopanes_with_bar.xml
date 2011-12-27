@@ -2,7 +2,7 @@
 <!--
 /*
  * ConnectBot: simple, powerful, open-source SSH client for Android
- * Copyright 2007 Kenny Root, Jeffrey Sharkey
+ * Copyright 2011 Kenny Root, Jeffrey Sharkey
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,22 +21,36 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
+	android:orientation="vertical"
 	>
 
-	<FrameLayout
-		android:id="@+id/listFrame"
-		android:layout_width="0dp"
-		android:layout_height="fill_parent"
-		android:layout_weight="1"
-		android:background="?android:attr/detailsElementBackground"
-	/>
+	<include layout="@layout/bar_hostlist" />
 
-	<FrameLayout
-		android:id="@+id/consoleFrame"
-		android:layout_width="0dp"
+	<LinearLayout
+		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"
-		android:layout_marginLeft="10dp"
-		android:layout_weight="3"
-	/>
+		>
 
+		<fragment
+			android:id="@+id/listFragment"
+			class="org.connectbot.HostListFragment"
+			android:layout_width="0dp"
+			android:layout_height="fill_parent"
+			android:layout_weight="1"
+			>
+			<!-- Preview: layout=@layout/frg_hostlist -->
+		</fragment>
+
+		<fragment
+			android:id="@+id/consoleFragment"
+			class="org.connectbot.ConsoleFragment"
+			android:layout_width="0dp"
+			android:layout_height="fill_parent"
+			android:layout_marginLeft="10dp"
+			android:layout_weight="3"
+			>
+			<!-- Preview: layout=@layout/frg_console -->
+		</fragment>
+
+	</LinearLayout>
 </LinearLayout>

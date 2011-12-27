@@ -17,13 +17,21 @@
  * limitations under the License.
  */
 -->
-<resources>
-	<style name="NoTitle" parent="android:Theme">
-		<item name="android:windowNoTitle">true</item>
-		<item name="android:windowContentOverlay">@null</item>
-	</style>
 
-	<style name="ThemeSelector" parent="android:Theme.NoTitleBar">
-		<item name="android:windowContentOverlay">@null</item>
-	</style>
-</resources>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	>
+
+	<fragment
+		android:id="@+id/listFragment"
+		class="org.connectbot.HostListFragment"
+		android:layout_width="0dp"
+		android:layout_height="fill_parent"
+		android:layout_weight="1"
+		android:background="@color/list_background"
+		>
+		<!-- Preview: layout=@layout/frg_hostlist -->
+	</fragment>
+
+</LinearLayout>
