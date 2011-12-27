@@ -66,6 +66,7 @@
 			android:layout_height="wrap_content"
 			android:password="true"
 			android:singleLine="true"
+			android:inputType="textPassword"
 			android:layout_below="@+id/console_password_instructions"
 			/>
 
@@ -133,7 +134,8 @@
 			android:layout_height="wrap_content"
 			android:layout_alignParentBottom="true"
 			android:layout_alignParentRight="true"
-			android:src="@+drawable/button_keyboard"
+			android:src="@drawable/button_keyboard"
+			android:contentDescription="@string/image_description_show_keyboard"
 			/>
 
 		<ImageView
@@ -143,7 +145,8 @@
 			android:layout_height="wrap_content"
 			android:layout_alignParentLeft="true"
 			android:layout_alignParentBottom="true"
-			android:src="@+drawable/button_ctrl"
+			android:src="@drawable/button_ctrl"
+			android:contentDescription="@string/image_description_toggle_control_character"
 			/>
 
 		<ImageView
@@ -153,7 +156,8 @@
 			android:layout_height="wrap_content"
 			android:layout_toRightOf="@+id/button_ctrl"
 			android:layout_alignParentBottom="true"
-			android:src="@+drawable/button_esc"
+			android:src="@drawable/button_esc"
+			android:contentDescription="@string/image_description_send_escape_character"
 			/>
 
 	</RelativeLayout>
